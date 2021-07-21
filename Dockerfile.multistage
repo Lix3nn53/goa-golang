@@ -2,7 +2,7 @@
 ## Build
 ##
 
-FROM golang:1.16-buster AS build
+FROM golang:1.16.6-buster AS build
 
 WORKDIR /app
 
@@ -12,7 +12,7 @@ RUN go mod download
 
 COPY *.go ./
 
-RUN go build -o /docker-goa-golang
+RUN go build -o /docker-app
 
 ##
 ## Deploy
@@ -22,10 +22,10 @@ FROM gcr.io/distroless/base-debian10
 
 WORKDIR /
 
-COPY --from=build /docker-goa-golang /docker-goa-golang
+COPY --from=build /docker-app /docker-app
 
 EXPOSE 8080
 
 USER nonroot:nonroot
 
-ENTRYPOINT ["/docker-goa-golang"]
+ENTRYPOINT ["/docker-app"]

@@ -1,6 +1,6 @@
 # Alpine is chosen for its small footprint
 # compared to Ubuntu
-FROM golang:1.16-alpine
+FROM golang:1.16.6-alpine
 
 WORKDIR /app
 
@@ -11,8 +11,8 @@ RUN go mod download
 
 COPY *.go ./
 
-RUN go build -o /docker-goa-golang
+RUN go build -o /docker-app
 
 EXPOSE 8080
 
-CMD [ "/docker-goa-golang" ]
+CMD [ "/docker-app" ]
