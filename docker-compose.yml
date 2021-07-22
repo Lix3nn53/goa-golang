@@ -1,8 +1,8 @@
 version: "3.8"
 
 services:
-  backend:
-    build: backend
+  api:
+    build: api
     secrets:
       - db-password
     # depends_on:
@@ -35,7 +35,7 @@ services:
     ports:
       - "${PORT}:80"
     depends_on:
-      - backend
+      - api
 volumes:
   db-data:
 secrets:
