@@ -1,16 +1,14 @@
 version: "3.8"
 
 services:
-  docker-app:
-    container_name: goa-api
-    build:
-      context: . # Use an image built from the specified dockerfile in the current directory.
+  backend:
+    build: backend
+    secrets:
+      - db-password
+    depends_on:
+      - db
     volumes:
       - .:/code
-    ports:
-      - "8080:${PORT}" # Forward port 8080 on the host OS to the port defined in .env
-    env_file:
-      - .env
     environment:
       - PGUSER=${PGUSER:-totoro}
       - PGPASSWORD=${PGPASSWORD:?database password not set}
@@ -20,3 +18,26 @@ services:
     deploy:
       restart_policy:
         condition: on-failure
+  db:
+    image: postgres
+    restart: always
+    secrets:
+      - db-password
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=example
+      - POSTGRES_PASSWORD_FILE=/run/secrets/db-password
+    expose:
+      - 5432
+  proxy:
+    build: proxy
+    ports:
+      - "${PORT}:80"
+    depends_on:
+      - backend
+volumes:
+  db-data:
+secrets:
+  db-password:
+    file: db/password.txt
