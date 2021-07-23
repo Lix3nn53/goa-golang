@@ -1,0 +1,29 @@
+basePath: /v1
+consumes:
+- application/json
+host: localhost
+info:
+  contact:
+    email: lixakyildiz@gmail.com
+    name: Lix3nn
+    url: https://www.guardiansofadelia.com
+  description: |-
+    the purpose of this application is to provide an application
+    that is using plain go code to define an API
+
+    This should demonstrate all the possible comment annotations
+    that are available to turn go code into a fully compliant swagger 2.0 spec
+  license:
+    name: MIT
+    url: http://opensource.org/licenses/MIT
+  termsOfService: there are no TOS at this moment, use at your own risk we take no
+    responsibility
+  title: GoA API.
+  version: 0.0.1
+paths: {}
+produces:
+- application/json
+schemes:
+- http
+- https
+swagger: "2.0"

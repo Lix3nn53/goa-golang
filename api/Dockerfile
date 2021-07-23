@@ -9,7 +9,7 @@ COPY go.mod ./
 COPY go.sum ./
 RUN go mod download
 
-COPY *.go ./
+COPY . ./
 
 RUN CGO_ENABLED=0 GOOS=linux go build -ldflags "-s -w" -o /server
 
@@ -19,6 +19,7 @@ RUN upx /server
 FROM scratch
 WORKDIR /
 COPY --from=build /server /server
+COPY --from=build /app/public /public
 
 EXPOSE 8080
 
