@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-
 	"goa-golang/internal/dic"
 	"goa-golang/internal/logger"
 	"goa-golang/internal/route"
@@ -16,13 +14,13 @@ import (
 var config string
 
 func main() {
-	fmt.Println("Hello World!")
-
 	flag.StringVar(&config, "env", "dev.env", "Environment name")
 	flag.Parse()
 
 	logger := logger.NewAPILogger()
 	logger.InitLogger()
+
+	logger.Info("Hello World!")
 
 	if err := godotenv.Load(config); err != nil {
 		logger.Fatalf(err.Error())

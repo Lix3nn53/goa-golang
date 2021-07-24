@@ -56,7 +56,9 @@ func Setup(container di.Container, logger logger.Logger) *gin.Engine {
 	v1 := r.Group("/api")
 
 	routev1.SetupDocsRoute(v1, container)
-	routev1.SetupUserRoute(v1, container, logger)
+
+	users := v1.Group("/users")
+	routev1.SetupUserRoute(users, container, logger)
 
 	return r
 }

@@ -60,9 +60,7 @@ func (l *apiLogger) InitLogger() {
 
 	logWriter := zapcore.AddSync(os.Stderr)
 
-	var encoderCfg zapcore.EncoderConfig
-
-	encoderCfg = zap.NewDevelopmentEncoderConfig()
+	encoderCfg := zap.NewDevelopmentEncoderConfig()
 
 	var encoder zapcore.Encoder
 	encoderCfg.LevelKey = "LEVEL"

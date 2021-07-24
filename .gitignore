@@ -15,4 +15,5 @@
 # vendor/
 
 # Secrets
-*.env
+.env
+pro.env
