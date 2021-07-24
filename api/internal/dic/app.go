@@ -3,6 +3,7 @@ package dic
 import (
 	"goa-golang/app/repository"
 	"goa-golang/app/service"
+	"goa-golang/internal/logger"
 	"goa-golang/internal/middleware"
 	"goa-golang/internal/storage"
 	"log"
@@ -35,17 +36,17 @@ const UserService = "service.user"
 // const BillingService = "service.paypal"
 
 // InitContainer dependency injection container
-func InitContainer() di.Container {
+func InitContainer(logger logger.Logger) di.Container {
 	builder, err := di.NewBuilder()
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-	RegisterServices(builder)
+	RegisterServices(builder, logger)
 	return builder.Build()
 }
 
 // RegisterServices Initialize all the dependency
-func RegisterServices(builder *di.Builder) {
+func RegisterServices(builder *di.Builder, logger logger.Logger) {
 	builder.Add(di.Def{
 		Name: DbService,
 		Build: func(ctn di.Container) (interface{}, error) {
@@ -77,7 +78,7 @@ func RegisterServices(builder *di.Builder) {
 	builder.Add(di.Def{
 		Name: TestMiddleware,
 		Build: func(ctn di.Container) (interface{}, error) {
-			return middleware.NewTestMiddleware(), nil
+			return middleware.NewTestMiddleware(logger), nil
 		},
 	})
 

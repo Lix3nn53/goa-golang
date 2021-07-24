@@ -1,12 +1,14 @@
 package middleware
 
 import (
-	"fmt"
-
 	"github.com/gin-gonic/gin"
+
+	"goa-golang/internal/logger"
 )
 
-type testMiddleware struct{}
+type testMiddleware struct {
+	logger logger.Logger
+}
 
 //TestMiddlewareInterface ...
 type TestMiddlewareInterface interface {
@@ -14,14 +16,16 @@ type TestMiddlewareInterface interface {
 }
 
 //NewTestMiddleware ...
-func NewTestMiddleware() TestMiddlewareInterface {
-	return &testMiddleware{}
+func NewTestMiddleware(logger logger.Logger) TestMiddlewareInterface {
+	return &testMiddleware{
+		logger,
+	}
 }
 
 //Handler ...
 func (cm testMiddleware) Handler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		fmt.Println(("TEST MIDDLEWARE"))
+		cm.logger.Infof("Test Middleware: %s", c.ClientIP())
 
 		c.Next()
 	}

@@ -1,28 +1,30 @@
 package controller
 
 import (
-	"github.com/gin-gonic/gin"
-
 	"net/http"
 	"os"
+
+	"github.com/gin-gonic/gin"
 )
 
-type ServerController struct{}
+//ServerControllerInterface define the user controller interface methods
+type ServerControllerInterface interface {
+	Ping(c *gin.Context)
+	Version(c *gin.Context)
+}
 
-// Ping godoc
-// @Tags Server
-// @Success 200 {object} viewModels.Message{}
-// @Failure 500
-// @Router /status/ping [get]
-func (ServerController) Ping(c *gin.Context) {
+// serverController handles communication with the user service
+type serverController struct{}
+
+// NewServerController implements the user controller interface.
+func NewServerController() ServerControllerInterface {
+	return &serverController{}
+}
+
+func (uc *serverController) Ping(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "pong"})
 }
 
-// Version godoc
-// @Tags Server
-// @Success 200 {object} viewModels.Message{}
-// @Failure 500
-// @Router /status/version [get]
-func (ServerController) Version(c *gin.Context) {
+func (uc *serverController) Version(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"version": os.Getenv("VERSION")})
 }

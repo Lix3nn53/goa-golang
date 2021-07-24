@@ -2,10 +2,10 @@ package route
 
 import (
 	"fmt"
-	routev1 "goa-golang/app/route/v1"
 	"goa-golang/internal/dic"
 	"goa-golang/internal/logger"
 	"goa-golang/internal/middleware"
+	routev1 "goa-golang/internal/route/v1"
 	"os"
 	"time"
 
@@ -55,7 +55,7 @@ func Setup(container di.Container, logger logger.Logger) *gin.Engine {
 
 	v1 := r.Group("/api")
 
-	routev1.SetupDocsRoute(v1)
+	routev1.SetupDocsRoute(v1, container)
 	routev1.SetupUserRoute(v1, container, logger)
 
 	return r
