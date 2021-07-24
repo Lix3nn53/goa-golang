@@ -15,11 +15,12 @@ func SetupDocsRoute(v1 *gin.RouterGroup, container di.Container) *gin.RouterGrou
 	v1.Use(testMiddleware.Handler())
 	{
 		// handler for documentation
+		v1.StaticFile("/swagger.yml", "./public/docs/swagger.yml")
+
 		opts := openapi.RedocOpts{BasePath: "/v1", SpecURL: "/v1/swagger.yml"}
 		sh := openapi.Redoc(opts, nil)
 
 		v1.GET("/docs", gin.WrapH(sh))
-		v1.StaticFile("/swagger.yml", "./public/swagger.yml")
 	}
 
 	return v1
