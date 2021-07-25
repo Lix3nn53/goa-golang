@@ -45,24 +45,19 @@ var loggerLevelMap = map[string]zapcore.Level{
 	"fatal":  zapcore.FatalLevel,
 }
 
-func (l *apiLogger) getLoggerLevel() zapcore.Level {
-	level, exist := loggerLevelMap[os.Getenv("LOGGER_DEVEL")]
-	if !exist {
-		return zapcore.DebugLevel
-	}
-
-	return level
-}
-
 // Init logger
 func (l *apiLogger) InitLogger() {
-	logLevel := l.getLoggerLevel()
+	highPriority := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
+		return lvl >= zapcore.ErrorLevel
+	})
+	lowPriority := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
+		return lvl < zapcore.ErrorLevel
+	})
 
-	logWriter := zapcore.AddSync(os.Stderr)
+	consoleDebugging := zapcore.Lock(os.Stdout)
+	consoleErrors := zapcore.Lock(os.Stderr)
 
 	encoderCfg := zap.NewDevelopmentEncoderConfig()
-
-	var encoder zapcore.Encoder
 	encoderCfg.LevelKey = "LEVEL"
 	encoderCfg.CallerKey = "CALLER"
 	encoderCfg.TimeKey = "TIME"
@@ -71,10 +66,13 @@ func (l *apiLogger) InitLogger() {
 	encoderCfg.ConsoleSeparator = " - "
 	encoderCfg.EncodeCaller = zapcore.ShortCallerEncoder
 
-	encoder = zapcore.NewConsoleEncoder(encoderCfg)
-
+	consoleEncoder := zapcore.NewConsoleEncoder(encoderCfg)
 	encoderCfg.EncodeTime = zapcore.ISO8601TimeEncoder
-	core := zapcore.NewCore(encoder, logWriter, zap.NewAtomicLevelAt(logLevel))
+
+	core := zapcore.NewTee(
+		zapcore.NewCore(consoleEncoder, consoleErrors, highPriority),
+		zapcore.NewCore(consoleEncoder, consoleDebugging, lowPriority),
+	)
 	logger := zap.New(core, zap.AddCaller(), zap.AddCallerSkip(1))
 
 	l.sugarLogger = logger.Sugar()

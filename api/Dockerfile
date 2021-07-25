@@ -20,6 +20,8 @@ FROM scratch
 WORKDIR /
 COPY --from=build /server /server
 COPY --from=build /app/public /public
+COPY --from=build /app/dev.env /
+COPY --from=build /app/pro.env /
 
 EXPOSE 8080
 
