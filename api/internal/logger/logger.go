@@ -34,17 +34,6 @@ func NewAPILogger() *apiLogger {
 	return &apiLogger{}
 }
 
-// For mapping config logger to app logger levels
-var loggerLevelMap = map[string]zapcore.Level{
-	"debug":  zapcore.DebugLevel,
-	"info":   zapcore.InfoLevel,
-	"warn":   zapcore.WarnLevel,
-	"error":  zapcore.ErrorLevel,
-	"dpanic": zapcore.DPanicLevel,
-	"panic":  zapcore.PanicLevel,
-	"fatal":  zapcore.FatalLevel,
-}
-
 // Init logger
 func (l *apiLogger) InitLogger() {
 	highPriority := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
