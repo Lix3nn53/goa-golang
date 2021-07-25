@@ -68,8 +68,10 @@ func (l *apiLogger) InitLogger() {
 	encoderCfg.TimeKey = "TIME"
 	encoderCfg.NameKey = "NAME"
 	encoderCfg.MessageKey = "MESSAGE"
+	encoderCfg.ConsoleSeparator = " - "
+	encoderCfg.EncodeCaller = zapcore.ShortCallerEncoder
 
-	encoder = zapcore.NewJSONEncoder(encoderCfg)
+	encoder = zapcore.NewConsoleEncoder(encoderCfg)
 
 	encoderCfg.EncodeTime = zapcore.ISO8601TimeEncoder
 	core := zapcore.NewCore(encoder, logWriter, zap.NewAtomicLevelAt(logLevel))
