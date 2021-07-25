@@ -8,12 +8,13 @@ import (
 	"flag"
 	"os"
 
+	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )
 
 var config string
 
-func main() {
+func setupRouter() (*gin.Engine, logger.Logger) {
 	flag.StringVar(&config, "env", "dev.env", "Environment name")
 	flag.Parse()
 
@@ -27,5 +28,12 @@ func main() {
 	}
 	container := dic.InitContainer(logger)
 	router := route.Setup(container, logger)
+
+	return router, logger
+}
+
+func main() {
+	router, _ := setupRouter()
+
 	router.Run(":" + os.Getenv("APP_PORT"))
 }
