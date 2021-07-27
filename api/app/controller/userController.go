@@ -20,22 +20,22 @@ type UserControllerInterface interface {
 	Store(c *gin.Context)
 }
 
-// userController handles communication with the user service
-type userController struct {
+// UserController handles communication with the user service
+type UserController struct {
 	service service.UserServiceInterface
 	logger  logger.Logger
 }
 
 // NewUserController implements the user controller interface.
 func NewUserController(service service.UserServiceInterface, logger logger.Logger) UserControllerInterface {
-	return &userController{
+	return &UserController{
 		service,
 		logger,
 	}
 }
 
 // Find implements the method to handle the service to find a user by the primary key
-func (uc *userController) Find(c *gin.Context) {
+func (uc *UserController) Find(c *gin.Context) {
 
 	id, err := strconv.Atoi(c.Param("id"))
 
@@ -54,7 +54,7 @@ func (uc *userController) Find(c *gin.Context) {
 }
 
 // Destroy implements the method to validate the params to store a  new user and handle the service
-func (uc *userController) Destroy(c *gin.Context) {
+func (uc *UserController) Destroy(c *gin.Context) {
 
 	id, err := strconv.Atoi(c.Param("id"))
 
@@ -75,7 +75,7 @@ func (uc *userController) Destroy(c *gin.Context) {
 }
 
 // Update implements the method to validate teh params to update a user and handle the service
-func (uc *userController) Update(c *gin.Context) {
+func (uc *UserController) Update(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 
 	if err != nil {
@@ -109,7 +109,7 @@ func (uc *userController) Update(c *gin.Context) {
 }
 
 // Store implements the method to validate the params to store a  new user and handle the service
-func (uc *userController) Store(c *gin.Context) {
+func (uc *UserController) Store(c *gin.Context) {
 
 	var rq model.CreateUser
 

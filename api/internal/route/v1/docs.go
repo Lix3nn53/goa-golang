@@ -1,17 +1,13 @@
 package v1
 
 import (
-	"goa-golang/internal/dic"
 	"goa-golang/internal/middleware"
 
 	"github.com/gin-gonic/gin"
 	openapi "github.com/go-openapi/runtime/middleware"
-	"github.com/sarulabs/dingo/generation/di"
 )
 
-func SetupDocsRoute(v1 *gin.RouterGroup, container di.Container) *gin.RouterGroup {
-	testMiddleware := container.Get(dic.TestMiddleware).(middleware.TestMiddlewareInterface)
-
+func SetupDocsRoute(v1 *gin.RouterGroup, testMiddleware middleware.TestMiddlewareInterface) *gin.RouterGroup {
 	v1.Use(testMiddleware.Handler())
 	{
 		// handler for documentation

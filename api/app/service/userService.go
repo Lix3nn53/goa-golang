@@ -19,7 +19,7 @@ type userService struct {
 }
 
 // NewUserService implements the user service interface.
-func NewUserService(userRepo repository.UserRepositoryInterface) *userService {
+func NewUserService(userRepo repository.UserRepositoryInterface) UserServiceInterface {
 	return &userService{
 		userRepo,
 	}

@@ -6,15 +6,15 @@ import (
 	"goa-golang/internal/logger"
 	"goa-golang/internal/middleware"
 	routev1 "goa-golang/internal/route/v1"
+	"goa-golang/internal/storage"
 	"os"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/sarulabs/dingo/generation/di"
 )
 
 // Setup returns initialized routes.
-func Setup(container di.Container, logger logger.Logger) *gin.Engine {
+func Setup(db *storage.DbStore, dbCache *storage.DbCache, logger logger.Logger) *gin.Engine {
 	// ac := container.Get(dic.AuthController).(controller.AuthControllerInterface)
 
 	gin.SetMode(os.Getenv("GIN_MODE"))
@@ -40,24 +40,20 @@ func Setup(container di.Container, logger logger.Logger) *gin.Engine {
 	r.Use(gin.Recovery())
 
 	// Middleware initialization
-	corsMiddleware := container.Get(dic.CorsMiddleware).(middleware.CorsMiddlewareInterface)
+	corsMiddleware := middleware.NewCorsMiddleware()
 	r.Use(corsMiddleware.Handler())
 
 	// server Routes
 	SetupServerRoute(r)
 
 	// v1 Routes
-
-	// uc := container.Get(dic.UserController).(controller.UserControllerInterface)
-	// uc := controller.NewUserController(container.Get(dic.UserService).(service.UserServiceInterface), logger)
-
-	// billc := controller.NewBillingController(container.Get(dic.BillingService).(service.BillingServiceInterface), container.Get(dic.UserService).(service.UserServiceInterface), logger)
-
 	v1 := r.Group("/v1")
-	routev1.SetupDocsRoute(v1, container)
+	testMiddleware := middleware.NewTestMiddleware(logger)
+	routev1.SetupDocsRoute(v1, testMiddleware)
 
-	users := v1.Group("/users")
-	routev1.SetupUserRoute(users, container, logger)
+	usersRouter := v1.Group("/users")
+	userController := dic.InitUserController(db, logger)
+	routev1.SetupUserRoute(usersRouter, userController)
 
 	return r
 }

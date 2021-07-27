@@ -1,9 +1,9 @@
 package main
 
 import (
-	"goa-golang/internal/dic"
 	"goa-golang/internal/logger"
 	"goa-golang/internal/route"
+	"goa-golang/internal/storage"
 
 	"flag"
 	"os"
@@ -26,8 +26,10 @@ func setupRouter() (*gin.Engine, logger.Logger) {
 	if err := godotenv.Load(config); err != nil {
 		logger.Fatalf(err.Error())
 	}
-	container := dic.InitContainer(logger)
-	router := route.Setup(container, logger)
+
+	db := storage.InitializeDB()
+	dbCache := storage.InitializeCache()
+	router := route.Setup(db, dbCache, logger)
 
 	return router, logger
 }
