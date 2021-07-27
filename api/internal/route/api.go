@@ -53,8 +53,7 @@ func Setup(container di.Container, logger logger.Logger) *gin.Engine {
 
 	// billc := controller.NewBillingController(container.Get(dic.BillingService).(service.BillingServiceInterface), container.Get(dic.UserService).(service.UserServiceInterface), logger)
 
-	v1 := r.Group("/api")
-
+	v1 := r.Group("/v1")
 	routev1.SetupDocsRoute(v1, container)
 
 	users := v1.Group("/users")
