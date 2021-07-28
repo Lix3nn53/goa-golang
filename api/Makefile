@@ -5,4 +5,7 @@ swagger: check_install
 	GO111MODULE=off swagger generate spec -o ./public/docs/swagger.yml --scan-models
 
 generate_client:
-	cd sdk && swagger generate client -f ../public/docs/swagger.yml -A product-api
+	swagger generate client -f ./public/docs/swagger.yml -A product-api
+
+generate_mock:
+  mockgen -source ./app/repository/userRepository.go -destination ./mock/UserRepository.go -package=mock

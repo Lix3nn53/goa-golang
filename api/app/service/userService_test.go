@@ -45,7 +45,7 @@ func TestUserService_Store(t *testing.T) {
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	userR := mock.NewMockUserPGRepository(ctrl)
+	userR := mock.NewMockUserRepositoryInterface(ctrl)
 	userService := NewUserService(userR)
 
 	reqValue := model.CreateUser{
