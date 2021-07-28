@@ -3,6 +3,7 @@ package service
 import (
 	"goa-golang/app/model"
 	"goa-golang/app/repository"
+	"goa-golang/internal/logger"
 	"goa-golang/mock"
 	"reflect"
 	"testing"
@@ -80,5 +81,9 @@ func TestUserService_Store(t *testing.T) {
 
 		require.NoError(t, err)
 		require.NotNil(t, response)
+
+		logger := logger.NewAPILogger()
+		logger.InitLogger()
+		logger.Info(response)
 	})
 }
