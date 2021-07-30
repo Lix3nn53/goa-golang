@@ -1,4 +1,4 @@
-package controller
+package userController
 
 import (
 	errorNotFound "goa-golang/app/error"

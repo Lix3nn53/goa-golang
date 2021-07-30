@@ -1,4 +1,4 @@
-package controller
+package serverController
 
 import (
 	"net/http"
@@ -21,10 +21,20 @@ func NewServerController() ServerControllerInterface {
 	return &serverController{}
 }
 
+type PingResponse struct {
+	Message string `json:"message"`
+}
+
 func (uc *serverController) Ping(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"message": "pong"})
+	response := PingResponse{Message: "pong"}
+	c.JSON(http.StatusOK, response)
+}
+
+type VersionResponse struct {
+	Version string `json:"version"`
 }
 
 func (uc *serverController) Version(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"version": os.Getenv("VERSION")})
+	response := VersionResponse{Version: os.Getenv("VERSION")}
+	c.JSON(http.StatusOK, response)
 }

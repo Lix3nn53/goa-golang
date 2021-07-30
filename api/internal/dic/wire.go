@@ -4,7 +4,7 @@
 package dic
 
 import (
-	"goa-golang/app/controller"
+	userController "goa-golang/app/controller/user"
 	"goa-golang/app/repository"
 	"goa-golang/app/service"
 	"goa-golang/internal/logger"
@@ -13,8 +13,8 @@ import (
 	"github.com/google/wire"
 )
 
-func initUserController(db *storage.DbStore, logger logger.Logger) controller.UserControllerInterface {
-	wire.Build(repository.NewUserRepository, service.NewUserService, controller.NewUserController)
+func initUserController(db *storage.DbStore, logger logger.Logger) userController.UserControllerInterface {
+	wire.Build(repository.NewUserRepository, service.NewUserService, userController.NewUserController)
 
-	return &controller.UserController{}
+	return &userController.UserController{}
 }

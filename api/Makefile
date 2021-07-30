@@ -7,5 +7,8 @@ swagger: check_install
 generate_client:
 	swagger generate client -f ./public/docs/swagger.yml -A product-api
 
+generate_wire:
+  cd internal/dic && wire
+
 generate_mock:
   mockgen -source ./app/repository/userRepository.go -destination ./mock/UserRepository.go -package=mock

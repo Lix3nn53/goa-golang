@@ -1,4 +1,4 @@
-package controller
+package userController
 
 import (
 	error2 "goa-golang/app/error"

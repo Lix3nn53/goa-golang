@@ -1,18 +1,28 @@
 basePath: /v1
 consumes:
 - application/json
+definitions:
+  PingResponse:
+    properties:
+      message:
+        type: string
+        x-go-name: Message
+    type: object
+    x-go-package: goa-golang/app/controller/server
+  VersionResponse:
+    properties:
+      version:
+        type: string
+        x-go-name: Version
+    type: object
+    x-go-package: goa-golang/app/controller/server
 host: localhost
 info:
   contact:
     email: lixakyildiz@gmail.com
     name: Lix3nn
     url: https://www.guardiansofadelia.com
-  description: |-
-    the purpose of this application is to provide an application
-    that is using plain go code to define an API
-
-    This should demonstrate all the possible comment annotations
-    that are available to turn go code into a fully compliant swagger 2.0 spec
+  description: Documentation of Guardians of Adelia API.
   license:
     name: MIT
     url: http://opensource.org/licenses/MIT
@@ -20,10 +30,48 @@ info:
     responsibility
   title: GoA API.
   version: 0.0.1
-paths: {}
+paths:
+  /ping:
+    get:
+      description: Check if the server is running.
+      operationId: ping
+      responses:
+        "200":
+          $ref: '#/responses/pingResponse'
+      summary: ping
+      tags:
+      - server
+  /version:
+    get:
+      description: Returns the version of the api.
+      operationId: version
+      responses:
+        "200":
+          $ref: '#/responses/versionResponse'
+      summary: version
+      tags:
+      - server
 produces:
 - application/json
+responses:
+  pingResponse:
+    description: Server is running!
+    schema:
+      $ref: '#/definitions/PingResponse'
+  versionResponse:
+    description: ""
+    schema:
+      $ref: '#/definitions/VersionResponse'
 schemes:
 - http
 - https
+securityDefinitions:
+  oauth2:
+    authorizationUrl: /oauth2/auth
+    flow: accessCode
+    in: header
+    scopes:
+      server: description
+    tokenUrl: /oauth2/token
+    type: oauth2
 swagger: "2.0"
