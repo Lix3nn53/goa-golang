@@ -1,3 +1,5 @@
+//lint:file-ignore U1000 Ignore all unused code
+
 package serverController
 
 // swagger:route GET /ping server ping
