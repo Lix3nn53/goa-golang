@@ -1,4 +1,4 @@
-package repository
+package userRepository
 
 import (
 	"goa-golang/app/model"

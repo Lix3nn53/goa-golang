@@ -1,8 +1,8 @@
-package service
+package userService
 
 import (
 	"goa-golang/app/model"
-	"goa-golang/app/repository"
+	"goa-golang/app/repository/userRepository"
 )
 
 //UserServiceInterface define the user service interface methods
@@ -15,11 +15,11 @@ type UserServiceInterface interface {
 
 // billingService handles communication with the user repository
 type userService struct {
-	userRepo repository.UserRepositoryInterface
+	userRepo userRepository.UserRepositoryInterface
 }
 
 // NewUserService implements the user service interface.
-func NewUserService(userRepo repository.UserRepositoryInterface) UserServiceInterface {
+func NewUserService(userRepo userRepository.UserRepositoryInterface) UserServiceInterface {
 	return &userService{
 		userRepo,
 	}

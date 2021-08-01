@@ -7,9 +7,9 @@
 package dic
 
 import (
-	userController "goa-golang/app/controller/user"
-	"goa-golang/app/repository"
-	"goa-golang/app/service"
+	"goa-golang/app/controller/userController"
+	"goa-golang/app/repository/userRepository"
+	"goa-golang/app/service/userService"
 	"goa-golang/internal/logger"
 	"goa-golang/internal/storage"
 
@@ -17,7 +17,7 @@ import (
 )
 
 func initUserController(db *storage.DbStore, logger logger.Logger) userController.UserControllerInterface {
-	wire.Build(repository.NewUserRepository, service.NewUserService, userController.NewUserController)
+	wire.Build(userRepository.NewUserRepository, userService.NewUserService, userController.NewUserController)
 
 	return &userController.UserController{}
 }

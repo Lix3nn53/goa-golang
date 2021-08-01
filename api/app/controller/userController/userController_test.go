@@ -3,7 +3,7 @@ package userController
 import (
 	error2 "goa-golang/app/error"
 	"goa-golang/app/model"
-	"goa-golang/app/service"
+	"goa-golang/app/service/userService"
 	"goa-golang/internal/logger"
 	"goa-golang/mock"
 	"net/http"
@@ -88,7 +88,7 @@ func TestMicroservice_Find(t *testing.T) {
 
 func TestNewUserController(t *testing.T) {
 	type args struct {
-		service service.UserServiceInterface
+		service userService.UserServiceInterface
 		logger  logger.Logger
 	}
 	tests := []struct {

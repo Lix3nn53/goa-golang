@@ -1,4 +1,4 @@
-package repository
+package userRepository
 
 import (
 	"database/sql"

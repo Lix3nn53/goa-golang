@@ -1,7 +1,7 @@
 package v1
 
 import (
-	userController "goa-golang/app/controller/user"
+	"goa-golang/app/controller/userController"
 
 	"github.com/gin-gonic/gin"
 )

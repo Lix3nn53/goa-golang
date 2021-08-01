@@ -3,7 +3,7 @@ package userController
 import (
 	errorNotFound "goa-golang/app/error"
 	"goa-golang/app/model"
-	"goa-golang/app/service"
+	"goa-golang/app/service/userService"
 	"goa-golang/internal/logger"
 	"net/http"
 	"strconv"
@@ -22,12 +22,12 @@ type UserControllerInterface interface {
 
 // UserController handles communication with the user service
 type UserController struct {
-	service service.UserServiceInterface
+	service userService.UserServiceInterface
 	logger  logger.Logger
 }
 
 // NewUserController implements the user controller interface.
-func NewUserController(service service.UserServiceInterface, logger logger.Logger) UserControllerInterface {
+func NewUserController(service userService.UserServiceInterface, logger logger.Logger) UserControllerInterface {
 	return &UserController{
 		service,
 		logger,

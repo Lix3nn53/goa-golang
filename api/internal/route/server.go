@@ -3,7 +3,7 @@ package route
 import (
 	"github.com/gin-gonic/gin"
 
-	serverController "goa-golang/app/controller/server"
+	"goa-golang/app/controller/serverController"
 )
 
 func SetupServerRoute(r *gin.Engine) *gin.Engine {

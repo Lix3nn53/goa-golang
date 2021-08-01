@@ -1,8 +1,8 @@
-package service
+package userService
 
 import (
 	"goa-golang/app/model"
-	"goa-golang/app/repository"
+	"goa-golang/app/repository/userRepository"
 	"goa-golang/internal/logger"
 	"goa-golang/mock"
 	"reflect"
@@ -14,7 +14,7 @@ import (
 
 func TestNewUserService(t *testing.T) {
 	type args struct {
-		userRepository repository.UserRepositoryInterface
+		userRepository userRepository.UserRepositoryInterface
 	}
 	tests := []struct {
 		name string
