@@ -1,7 +1,7 @@
 package billingService
 
 import (
-	"goa-golang/app/model/billing"
+	"goa-golang/app/model/billingModel"
 	"goa-golang/app/model/userModel"
 	"goa-golang/app/repository/billingRepository"
 	"goa-golang/mock"
@@ -59,12 +59,12 @@ func TestBillingService_AddBilling(t *testing.T) {
 			PostalCode: "1",
 		}
 
-		p := billing.Payment{
-			Identify: billing.AccountPaypal,
-			CustomerParams: billing.CustomerParams{
+		p := billingModel.Payment{
+			Identify: billingModel.AccountPaypal,
+			CustomerParams: billingModel.CustomerParams{
 				Email: "test3@test.com",
 				Desc:  "a 3rd test customer",
-				Card: &billing.CardParams{
+				Card: &billingModel.CardParams{
 					Name:     user.Name,
 					Number:   user.Cif,
 					ExpYear:  time.Now().Year() + 1,
@@ -102,12 +102,12 @@ func TestBillingService_GetPaymentAdapter(t *testing.T) {
 			PostalCode: "1",
 		}
 
-		p := billing.CreateCustomer{
-			Identify: billing.AccountPaypal,
-			CustomerParams: billing.CustomerParams{
+		p := billingModel.CreateCustomer{
+			Identify: billingModel.AccountPaypal,
+			CustomerParams: billingModel.CustomerParams{
 				Email: "test3@test.com",
 				Desc:  "a 3rd test customer",
-				Card: &billing.CardParams{
+				Card: &billingModel.CardParams{
 					Name:     user.Name,
 					Number:   user.Cif,
 					ExpYear:  time.Now().Year() + 1,
@@ -143,12 +143,12 @@ func TestBillingService_GetPaymentAdapter2(t *testing.T) {
 			PostalCode: "1",
 		}
 
-		p := billing.CreateCustomer{
-			Identify: billing.Identify("bad"),
-			CustomerParams: billing.CustomerParams{
+		p := billingModel.CreateCustomer{
+			Identify: billingModel.Identify("bad"),
+			CustomerParams: billingModel.CustomerParams{
 				Email: "test3@test.com",
 				Desc:  "a 3rd test customer",
-				Card: &billing.CardParams{
+				Card: &billingModel.CardParams{
 					Name:     user.Name,
 					Number:   user.Cif,
 					ExpYear:  time.Now().Year() + 1,

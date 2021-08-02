@@ -14,10 +14,6 @@ func SetupUserRoute(users *gin.RouterGroup, uc userController.UserControllerInte
 		user.GET("", uc.Find)
 		user.DELETE("", uc.Destroy)
 		user.PUT("", uc.Update)
-		// userBilling := user.Group("/billing")
-		// {
-		// 	userBilling.POST("", billc.AddCustomer)
-		// }
 	}
 
 	return users

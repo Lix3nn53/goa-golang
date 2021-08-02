@@ -1,7 +1,7 @@
 package userService
 
 import (
-	"goa-golang/app/model"
+	"goa-golang/app/model/userModel"
 	"goa-golang/app/repository/userRepository"
 	"goa-golang/internal/logger"
 	"goa-golang/mock"
@@ -48,7 +48,7 @@ func TestUserService_Store(t *testing.T) {
 	userR := mock.NewMockUserRepositoryInterface(ctrl)
 	userService := NewUserService(userR)
 
-	reqValue := model.CreateUser{
+	reqValue := userModel.CreateUser{
 		Name:       "a",
 		Cif:        "a@a.com",
 		Country:    "a",
@@ -58,7 +58,7 @@ func TestUserService_Store(t *testing.T) {
 	t.Run("Store", func(t *testing.T) {
 		t.Parallel()
 
-		user := model.CreateUser{
+		user := userModel.CreateUser{
 			Name:       reqValue.Name,
 			Cif:        reqValue.Cif,
 			Country:    reqValue.Country,
@@ -66,7 +66,7 @@ func TestUserService_Store(t *testing.T) {
 		}
 
 		userID := int(1)
-		userRes := &model.User{
+		userRes := &userModel.User{
 			ID:         userID,
 			Name:       user.Name,
 			Cif:        user.Cif,

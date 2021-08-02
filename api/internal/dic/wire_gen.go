@@ -5,8 +5,11 @@
 package dic
 
 import (
+	"goa-golang/app/controller/billingController"
 	"goa-golang/app/controller/userController"
+	"goa-golang/app/repository/billingRepository"
 	"goa-golang/app/repository/userRepository"
+	"goa-golang/app/service/billingService"
 	"goa-golang/app/service/userService"
 	"goa-golang/internal/logger"
 	"goa-golang/internal/storage"
@@ -14,9 +17,16 @@ import (
 
 // Injectors from wire.go:
 
-func InitUserController(db *storage.DbStore, logger2 logger.Logger) userController.UserControllerInterface {
+func InitUserController(db *storage.DbStore, logger2 logger.Logger) (userController.UserControllerInterface, userService.UserServiceInterface) {
 	userRepositoryInterface := userRepository.NewUserRepository(db)
 	userServiceInterface := userService.NewUserService(userRepositoryInterface)
 	userControllerInterface := userController.NewUserController(userServiceInterface, logger2)
+	return userControllerInterface, userServiceInterface
+}
+
+func InitBillingController(db *storage.DbStore, uservice userService.UserServiceInterface, logger2 logger.Logger) billingController.BillingControllerInterface {
+	userRepositoryInterface := billingRepository.NewBillingRepository(db)
+	userServiceInterface := billingService.NewBillingService(userRepositoryInterface)
+	userControllerInterface := billingController.NewBillingController(userServiceInterface, uservice, logger2)
 	return userControllerInterface
 }
