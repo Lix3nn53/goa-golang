@@ -13,20 +13,20 @@ type BillingServiceInterface interface {
 	GetPaymentAdapter(customer billingModel.CreateCustomer) (*billingModel.Payment, error)
 }
 
-// billingService handles communication with the user repository
-type billingService struct {
+// BillingService handles communication with the user repository
+type BillingService struct {
 	paymentRepo billingRepository.BillingRepositoryInterface
 }
 
 // NewUserService implements the user service interface.
-func NewBillingService(paymentRepo billingRepository.BillingRepositoryInterface) *billingService {
-	return &billingService{
+func NewBillingService(paymentRepo billingRepository.BillingRepositoryInterface) *BillingService {
+	return &BillingService{
 		paymentRepo,
 	}
 }
 
 // FindByID implements the method to store a new a user model
-func (s *billingService) AddBilling(user userModel.User, payment billingModel.Payment) error {
+func (s *BillingService) AddBilling(user userModel.User, payment billingModel.Payment) error {
 
 	key, err := payment.PaymentMethod.CreateCustomer(payment.CustomerParams)
 	if err != nil {
@@ -37,7 +37,7 @@ func (s *billingService) AddBilling(user userModel.User, payment billingModel.Pa
 }
 
 // FindByID implements the method to store a new a user model
-func (s *billingService) GetPaymentAdapter(customer billingModel.CreateCustomer) (*billingModel.Payment, error) {
+func (s *BillingService) GetPaymentAdapter(customer billingModel.CreateCustomer) (*billingModel.Payment, error) {
 	p, err := billingModel.GetPaymentAdapter(customer.Identify)
 
 	if err != nil {

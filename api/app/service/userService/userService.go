@@ -14,33 +14,33 @@ type UserServiceInterface interface {
 }
 
 // billingService handles communication with the user repository
-type userService struct {
+type UserService struct {
 	userRepo userRepository.UserRepositoryInterface
 }
 
 // NewUserService implements the user service interface.
 func NewUserService(userRepo userRepository.UserRepositoryInterface) UserServiceInterface {
-	return &userService{
+	return &UserService{
 		userRepo,
 	}
 }
 
 // FindByID implements the method to find a user model by primary key
-func (s *userService) FindByID(id int) (user *userModel.User, err error) {
+func (s *UserService) FindByID(id int) (user *userModel.User, err error) {
 	return s.userRepo.FindByID(id)
 }
 
 // FindByID implements the method to remove a user model by primary key
-func (s *userService) RemoveByID(id int) error {
+func (s *UserService) RemoveByID(id int) error {
 	return s.userRepo.RemoveByID(id)
 }
 
 // FindByID implements the method to update a user model by primary key
-func (s *userService) UpdateByID(id int, user userModel.UpdateUser) error {
+func (s *UserService) UpdateByID(id int, user userModel.UpdateUser) error {
 	return s.userRepo.UpdateByID(id, user)
 }
 
 // FindByID implements the method to store a new a user model
-func (s *userService) Store(user userModel.CreateUser) (*userModel.User, error) {
+func (s *UserService) Store(user userModel.CreateUser) (*userModel.User, error) {
 	return s.userRepo.Create(user)
 }

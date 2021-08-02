@@ -7,7 +7,6 @@
 package dic
 
 import (
-	"goa-golang/app/controller/billingController"
 	"goa-golang/app/controller/userController"
 	"goa-golang/app/repository/billingRepository"
 	"goa-golang/app/repository/userRepository"
@@ -19,14 +18,20 @@ import (
 	"github.com/google/wire"
 )
 
-func initUserController(db *storage.DbStore, logger logger.Logger) userController.UserControllerInterface {
-	wire.Build(userRepository.NewUserRepository, userService.NewUserService, userController.NewUserController)
+func initUserService(db *storage.DbStore) userService.UserServiceInterface {
+	wire.Build(userRepository.NewUserRepository, userService.NewUserService)
+
+	return &userService.UserService{}
+}
+
+func initUserController(us userService.UserServiceInterface, logger logger.Logger) userController.UserControllerInterface {
+	wire.Build(userController.NewUserController)
 
 	return &userController.UserController{}
 }
 
-func initBillingController(db *storage.DbStore, uservice userService.UserServiceInterface, logger logger.Logger) billingController.BillingControllerInterface {
-	wire.Build(billingRepository.NewBillingRepository, billingService.NewBillingService, billingController.NewBillingController)
+func initBillingService(db *storage.DbStore) billingService.BillingServiceInterface {
+	wire.Build(billingRepository.NewBillingRepository, billingService.NewBillingService)
 
-	return &billingController.BillingController{}
+	return &billingService.BillingService{}
 }
