@@ -48,12 +48,24 @@ func Setup(db *storage.DbStore, dbCache *storage.DbCache, logger logger.Logger) 
 
 	// v1 Routes
 	v1 := r.Group("/v1")
-	testMiddleware := middleware.NewTestMiddleware(logger)
-	routev1.SetupDocsRoute(v1, testMiddleware)
+	{
+		testMiddleware := middleware.NewTestMiddleware(logger)
+		routev1.SetupDocsRoute(v1, testMiddleware)
 
-	usersRouter := v1.Group("/users")
-	userController := dic.InitUserController(db, logger)
-	routev1.SetupUserRoute(usersRouter, userController)
+		users := v1.Group("/users")
+		{
+			userController := dic.InitUserController(db, logger)
+			routev1.SetupUserRoute(users, userController)
+
+			user := users.Group(":id")
+			{
+				userBilling := user.Group("/billing")
+				{
+
+				}
+			}
+		}
+	}
 
 	return r
 }

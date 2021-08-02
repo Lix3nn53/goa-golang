@@ -1,4 +1,4 @@
-package model
+package userModel
 
 // User represents user resources.
 type User struct {

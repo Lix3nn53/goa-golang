@@ -5,10 +5,10 @@
 package mock
 
 import (
-	model "goa-golang/app/model"
-	reflect "reflect"
+	"goa-golang/app/model/userModel"
+	"reflect"
 
-	gomock "github.com/golang/mock/gomock"
+	"github.com/golang/mock/gomock"
 )
 
 // MockUserServiceInterface is a mock of UserServiceInterface interface.
@@ -35,10 +35,10 @@ func (m *MockUserServiceInterface) EXPECT() *MockUserServiceInterfaceMockRecorde
 }
 
 // FindByID mocks base method.
-func (m *MockUserServiceInterface) FindByID(id int) (*model.User, error) {
+func (m *MockUserServiceInterface) FindByID(id int) (*userModel.User, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "FindByID", id)
-	ret0, _ := ret[0].(*model.User)
+	ret0, _ := ret[0].(*userModel.User)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -64,10 +64,10 @@ func (mr *MockUserServiceInterfaceMockRecorder) RemoveByID(id interface{}) *gomo
 }
 
 // Store mocks base method.
-func (m *MockUserServiceInterface) Store(user model.CreateUser) (*model.User, error) {
+func (m *MockUserServiceInterface) Store(user userModel.CreateUser) (*userModel.User, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Store", user)
-	ret0, _ := ret[0].(*model.User)
+	ret0, _ := ret[0].(*userModel.User)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -79,7 +79,7 @@ func (mr *MockUserServiceInterfaceMockRecorder) Store(user interface{}) *gomock.
 }
 
 // UpdateByID mocks base method.
-func (m *MockUserServiceInterface) UpdateByID(id int, user model.UpdateUser) error {
+func (m *MockUserServiceInterface) UpdateByID(id int, user userModel.UpdateUser) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateByID", id, user)
 	ret0, _ := ret[0].(error)

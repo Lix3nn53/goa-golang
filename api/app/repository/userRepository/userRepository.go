@@ -3,7 +3,7 @@ package userRepository
 import (
 	"database/sql"
 	appError "goa-golang/app/error"
-	"goa-golang/app/model"
+	"goa-golang/app/model/userModel"
 	"goa-golang/internal/storage"
 )
 
@@ -14,10 +14,10 @@ type userRepository struct {
 
 //UserRepositoryInterface define the user repository interface methods
 type UserRepositoryInterface interface {
-	FindByID(id int) (user *model.User, err error)
+	FindByID(id int) (user *userModel.User, err error)
 	RemoveByID(id int) error
-	UpdateByID(id int, user model.UpdateUser) error
-	Create(model.CreateUser) (user *model.User, err error)
+	UpdateByID(id int, user userModel.UpdateUser) error
+	Create(userModel.CreateUser) (user *userModel.User, err error)
 }
 
 // NewUserRepository implements the user repository interface.
@@ -28,8 +28,8 @@ func NewUserRepository(db *storage.DbStore) UserRepositoryInterface {
 }
 
 // FindByID implements the method to find a user from the store
-func (r *userRepository) FindByID(id int) (user *model.User, err error) {
-	user = &model.User{}
+func (r *userRepository) FindByID(id int) (user *userModel.User, err error) {
+	user = &userModel.User{}
 
 	var query = "SELECT id, cif, name, postal_code, country FROM users WHERE id = $1"
 	row := r.db.QueryRow(query, id)
@@ -53,7 +53,7 @@ func (r *userRepository) RemoveByID(id int) error {
 }
 
 // UpdateByID implements the method to update a user into the store
-func (r *userRepository) UpdateByID(id int, user model.UpdateUser) error {
+func (r *userRepository) UpdateByID(id int, user userModel.UpdateUser) error {
 	result, err := r.db.Exec("UPDATE users SET name = $1, cif = $2, postal_code = $3, country = $4 where id = $5", user.Name, user.Cif, user.PostalCode, user.Country, id)
 	if err != nil {
 		return err
@@ -72,7 +72,7 @@ func (r *userRepository) UpdateByID(id int, user model.UpdateUser) error {
 }
 
 // Create implements the method to persist a new user
-func (r *userRepository) Create(UserSignUp model.CreateUser) (user *model.User, err error) {
+func (r *userRepository) Create(UserSignUp userModel.CreateUser) (user *userModel.User, err error) {
 	createUserQuery := `INSERT INTO users (name, cif, postal_code, country) 
 		VALUES ($1, $2, $3, $4)
 		RETURNING id`
@@ -89,7 +89,7 @@ func (r *userRepository) Create(UserSignUp model.CreateUser) (user *model.User, 
 		return nil, err
 	}
 
-	return &model.User{
+	return &userModel.User{
 		ID:         userID,
 		Name:       UserSignUp.Name,
 		Cif:        UserSignUp.Cif,

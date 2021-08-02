@@ -2,7 +2,7 @@ package userController
 
 import (
 	errorNotFound "goa-golang/app/error"
-	"goa-golang/app/model"
+	"goa-golang/app/model/userModel"
 	"goa-golang/app/service/userService"
 	"goa-golang/internal/logger"
 	"net/http"
@@ -83,7 +83,7 @@ func (uc *UserController) Update(c *gin.Context) {
 		return
 	}
 
-	var user model.UpdateUser
+	var user userModel.UpdateUser
 
 	if err := c.ShouldBindJSON(&user); err != nil {
 		c.Writer.WriteHeader(http.StatusUnprocessableEntity)
@@ -111,7 +111,7 @@ func (uc *UserController) Update(c *gin.Context) {
 // Store implements the method to validate the params to store a  new user and handle the service
 func (uc *UserController) Store(c *gin.Context) {
 
-	var rq model.CreateUser
+	var rq userModel.CreateUser
 
 	if err := c.ShouldBindJSON(&rq); err != nil {
 		c.Writer.WriteHeader(http.StatusUnprocessableEntity)

@@ -1,7 +1,7 @@
 package userRepository
 
 import (
-	"goa-golang/app/model"
+	"goa-golang/app/model/userModel"
 	"goa-golang/internal/storage"
 	"reflect"
 	"testing"
@@ -51,7 +51,7 @@ func TestUserRepository_FindByID(t *testing.T) {
 
 	columns := []string{"id", "email", "cif", "postal_code", "country"}
 	userID := int(1)
-	mockUser := &model.User{
+	mockUser := &userModel.User{
 		ID:         userID,
 		Name:       "FirstName",
 		Cif:        "email@gmail.com",
@@ -88,7 +88,7 @@ func TestUserRepository_FindByID_IncorrectID(t *testing.T) {
 
 	columns := []string{"id", "cif", "name", "postal_code", "country"}
 	userID := int(1)
-	mockUser := &model.User{
+	mockUser := &userModel.User{
 		ID:         userID,
 		Name:       "FirstName",
 		Cif:        "email@gmail.com",
@@ -123,7 +123,7 @@ func TestUserRepository_Create(t *testing.T) {
 	userPGRepository := NewUserRepository(&storage.DbStore{DB: sqlxDB})
 
 	userID := int(1)
-	mockUser := model.CreateUser{
+	mockUser := userModel.CreateUser{
 		Name:       "FirstName",
 		Cif:        "LastName",
 		Country:    "es",

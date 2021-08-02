@@ -5,10 +5,10 @@
 package mock
 
 import (
-	model "goa-golang/app/model"
-	reflect "reflect"
+	"goa-golang/app/model/userModel"
+	"reflect"
 
-	gomock "github.com/golang/mock/gomock"
+	"github.com/golang/mock/gomock"
 )
 
 // MockUserRepositoryInterface is a mock of UserRepositoryInterface interface.
@@ -35,10 +35,10 @@ func (m *MockUserRepositoryInterface) EXPECT() *MockUserRepositoryInterfaceMockR
 }
 
 // Create mocks base method.
-func (m *MockUserRepositoryInterface) Create(arg0 model.CreateUser) (*model.User, error) {
+func (m *MockUserRepositoryInterface) Create(arg0 userModel.CreateUser) (*userModel.User, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Create", arg0)
-	ret0, _ := ret[0].(*model.User)
+	ret0, _ := ret[0].(*userModel.User)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -50,10 +50,10 @@ func (mr *MockUserRepositoryInterfaceMockRecorder) Create(arg0 interface{}) *gom
 }
 
 // FindByID mocks base method.
-func (m *MockUserRepositoryInterface) FindByID(id int) (*model.User, error) {
+func (m *MockUserRepositoryInterface) FindByID(id int) (*userModel.User, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "FindByID", id)
-	ret0, _ := ret[0].(*model.User)
+	ret0, _ := ret[0].(*userModel.User)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -79,7 +79,7 @@ func (mr *MockUserRepositoryInterfaceMockRecorder) RemoveByID(id interface{}) *g
 }
 
 // UpdateByID mocks base method.
-func (m *MockUserRepositoryInterface) UpdateByID(id int, user model.UpdateUser) error {
+func (m *MockUserRepositoryInterface) UpdateByID(id int, user userModel.UpdateUser) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateByID", id, user)
 	ret0, _ := ret[0].(error)

@@ -1,8 +1,8 @@
 package userController
 
 import (
-	error2 "goa-golang/app/error"
-	"goa-golang/app/model"
+	appError "goa-golang/app/error"
+	"goa-golang/app/model/userModel"
 	"goa-golang/app/service/userService"
 	"goa-golang/internal/logger"
 	"goa-golang/mock"
@@ -28,7 +28,7 @@ func TestMicroservice_Find(t *testing.T) {
 
 	userController := NewUserController(userUC, apiLogger)
 
-	reqValue := &model.CreateUser{
+	reqValue := &userModel.CreateUser{
 		Name:       "FirstName",
 		Cif:        "email@gmail.com",
 		Country:    "es",
@@ -36,7 +36,7 @@ func TestMicroservice_Find(t *testing.T) {
 	}
 
 	t.Run("Correct", func(t *testing.T) {
-		userRes := &model.User{
+		userRes := &userModel.User{
 			ID:         1,
 			Name:       reqValue.Name,
 			Cif:        reqValue.Cif,
@@ -59,7 +59,7 @@ func TestMicroservice_Find(t *testing.T) {
 	})
 
 	t.Run("Incorrect", func(t *testing.T) {
-		userUC.EXPECT().FindByID(2).Return(nil, error2.ErrNotFound)
+		userUC.EXPECT().FindByID(2).Return(nil, appError.ErrNotFound)
 
 		router := gin.Default()
 		router.GET("/api/users/:id", userController.Find)
