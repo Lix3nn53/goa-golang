@@ -54,12 +54,14 @@ func Setup(db *storage.DbStore, dbCache *storage.DbCache, logger logger.Logger) 
 
 		users := v1.Group("/users")
 		{
-			userController, userService := dic.InitUserController(db, logger)
+			userService := dic.InitUserService(db)
+			userController := dic.InitUserController(userService, logger)
 			routev1.SetupUserRoute(users, userController)
 
 			user := users.Group(":id")
 			{
-				billingController := dic.InitBillingController(db, userService, logger)
+				billingService := dic.InitBillingService(db)
+				billingController := dic.InitBillingController(billingService, userService, logger)
 				userBilling := user.Group("/billing")
 				{
 					routev1.SetupBillingRoute(userBilling, billingController)

@@ -19,7 +19,7 @@ type BillingService struct {
 }
 
 // NewUserService implements the user service interface.
-func NewBillingService(paymentRepo billingRepository.BillingRepositoryInterface) *BillingService {
+func NewBillingService(paymentRepo billingRepository.BillingRepositoryInterface) BillingServiceInterface {
 	return &BillingService{
 		paymentRepo,
 	}

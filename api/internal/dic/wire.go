@@ -7,6 +7,7 @@
 package dic
 
 import (
+	"goa-golang/app/controller/billingController"
 	"goa-golang/app/controller/userController"
 	"goa-golang/app/repository/billingRepository"
 	"goa-golang/app/repository/userRepository"
@@ -34,4 +35,10 @@ func initBillingService(db *storage.DbStore) billingService.BillingServiceInterf
 	wire.Build(billingRepository.NewBillingRepository, billingService.NewBillingService)
 
 	return &billingService.BillingService{}
+}
+
+func initBillingController(ub billingService.BillingServiceInterface, us userService.UserServiceInterface, logger logger.Logger) billingController.BillingControllerInterface {
+	wire.Build(billingController.NewBillingController)
+
+	return &billingController.BillingController{}
 }
