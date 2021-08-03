@@ -26,7 +26,7 @@ func TestNewUserService(t *testing.T) {
 			args: args{
 				userRepository: nil,
 			},
-			want: &userService{
+			want: &UserService{
 				userRepo: nil,
 			},
 		},

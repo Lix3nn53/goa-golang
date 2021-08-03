@@ -27,7 +27,7 @@ func TestNewBillingService(t *testing.T) {
 			args: args{
 				paymentRepo: nil,
 			},
-			want: &billingService{
+			want: &BillingService{
 				paymentRepo: nil,
 			},
 		},
