@@ -15,7 +15,7 @@ import (
 var config string
 
 func setupRouter() (*gin.Engine, logger.Logger) {
-	flag.StringVar(&config, "env", "dev.env", "Environment name")
+	flag.StringVar(&config, "env", "pro.env", "Environment name")
 	flag.Parse()
 
 	logger := logger.NewAPILogger()

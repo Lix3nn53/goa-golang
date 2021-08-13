@@ -14,3 +14,8 @@ services:
       - "${PORT}:80"
     depends_on:
       - api
+  redis:
+    image: "redis:alpine"
+    hostname: redis
+    ports:
+      - "6379:6379"
