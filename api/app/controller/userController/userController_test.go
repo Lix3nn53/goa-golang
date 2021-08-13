@@ -29,19 +29,16 @@ func TestMicroservice_Find(t *testing.T) {
 	userController := NewUserController(userUC, apiLogger)
 
 	reqValue := &userModel.CreateUser{
-		Name:       "FirstName",
-		Cif:        "email@gmail.com",
-		Country:    "es",
-		PostalCode: "es",
+		Email:      "email@gmail.com",
+		McUsername: "es",
+		Credits:    5,
 	}
 
 	t.Run("Correct", func(t *testing.T) {
 		userRes := &userModel.User{
-			ID:         1,
-			Name:       reqValue.Name,
-			Cif:        reqValue.Cif,
-			Country:    reqValue.Country,
-			PostalCode: reqValue.PostalCode,
+			Email:      reqValue.Email,
+			McUsername: reqValue.McUsername,
+			Credits:    reqValue.Credits,
 		}
 
 		userUC.EXPECT().FindByID(1).Return(userRes, nil)

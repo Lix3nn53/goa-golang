@@ -49,7 +49,7 @@ func TestBillingRepository_Create(t *testing.T) {
 
 	userPGRepository := NewBillingRepository(&storage.DbStore{DB: sqlxDB})
 
-	userID := int(1) // payment model.Payment, PaymentUserKey string, userID int
+	userID := string("1") // payment model.Payment, PaymentUserKey string, userID int
 	key := "cus_124"
 
 	serviceID := int(1)

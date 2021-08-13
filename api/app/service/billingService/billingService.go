@@ -33,7 +33,7 @@ func (s *BillingService) AddBilling(user userModel.User, payment billingModel.Pa
 		return err
 	}
 
-	return s.paymentRepo.CreateBillingService(payment.Identify, key, user.ID)
+	return s.paymentRepo.CreateBillingService(payment.Identify, key, user.UUID)
 }
 
 // FindByID implements the method to store a new a user model

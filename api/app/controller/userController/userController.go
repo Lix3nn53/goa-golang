@@ -6,7 +6,6 @@ import (
 	"goa-golang/app/service/userService"
 	"goa-golang/internal/logger"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -37,14 +36,9 @@ func NewUserController(service userService.UserServiceInterface, logger logger.L
 // Find implements the method to handle the service to find a user by the primary key
 func (uc *UserController) Find(c *gin.Context) {
 
-	id, err := strconv.Atoi(c.Param("id"))
+	uuid := c.Param("uuid")
 
-	if err != nil {
-		c.Status(http.StatusBadRequest)
-		return
-	}
-
-	user, err := uc.service.FindByID(id)
+	user, err := uc.service.FindByID(uuid)
 	if err != nil {
 		uc.logger.Error(err.Error())
 		c.Status(errorNotFound.ParseError(err))
@@ -55,15 +49,9 @@ func (uc *UserController) Find(c *gin.Context) {
 
 // Destroy implements the method to validate the params to store a  new user and handle the service
 func (uc *UserController) Destroy(c *gin.Context) {
+	uuid := c.Param("uuid")
 
-	id, err := strconv.Atoi(c.Param("id"))
-
-	if err != nil {
-		c.Status(http.StatusBadRequest)
-		return
-	}
-
-	err = uc.service.RemoveByID(id)
+	err := uc.service.RemoveByID(uuid)
 
 	if err != nil {
 		uc.logger.Error(err.Error())
@@ -76,12 +64,7 @@ func (uc *UserController) Destroy(c *gin.Context) {
 
 // Update implements the method to validate teh params to update a user and handle the service
 func (uc *UserController) Update(c *gin.Context) {
-	id, err := strconv.Atoi(c.Param("id"))
-
-	if err != nil {
-		c.Status(http.StatusBadRequest)
-		return
-	}
+	uuid := c.Param("id")
 
 	var user userModel.UpdateUser
 
@@ -91,13 +74,13 @@ func (uc *UserController) Update(c *gin.Context) {
 	}
 
 	validate := validator.New()
-	err = validate.Struct(user)
+	err := validate.Struct(user)
 	if err != nil {
 		c.Writer.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	err = uc.service.UpdateByID(id, user)
+	err = uc.service.UpdateByID(uuid, user)
 
 	if err != nil {
 		uc.logger.Error(err.Error())
@@ -125,7 +108,7 @@ func (uc *UserController) Store(c *gin.Context) {
 		return
 	}
 
-	user, err := uc.service.Store(rq)
+	user, err := uc.service.Store("1", rq)
 
 	if err != nil {
 		uc.logger.Error(err.Error())

@@ -46,17 +46,16 @@ func TestBillingService_AddBilling(t *testing.T) {
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	billingR := mock.NewMockBillingPGRepository(ctrl)
+	billingR := mock.NewMockBillingRepositoryInterface(ctrl)
 	billingService := NewBillingService(billingR)
 
 	t.Run("InvalidPayment", func(t *testing.T) {
 		t.Parallel()
 		user := userModel.User{
-			ID:         1,
-			Name:       "1",
-			Cif:        "1",
-			Country:    "1",
-			PostalCode: "1",
+			UUID:       "1",
+			Email:      "1",
+			McUsername: "1",
+			Credits:    9,
 		}
 
 		p := billingModel.Payment{
@@ -65,8 +64,8 @@ func TestBillingService_AddBilling(t *testing.T) {
 				Email: "test3@test.com",
 				Desc:  "a 3rd test customer",
 				Card: &billingModel.CardParams{
-					Name:     user.Name,
-					Number:   user.Cif,
+					Name:     user.McUsername,
+					Number:   user.UUID,
 					ExpYear:  time.Now().Year() + 1,
 					ExpMonth: 1,
 				},
@@ -76,7 +75,7 @@ func TestBillingService_AddBilling(t *testing.T) {
 
 		var err error
 
-		billingR.EXPECT().CreateBillingService(p.Identify, "fake", user.ID).Return(err) // identify model.Identify, PaymentUserKey string, userID int)
+		billingR.EXPECT().CreateBillingService(p.Identify, "fake", user.UUID).Return(err) // identify model.Identify, PaymentUserKey string, userID int)
 
 		err = billingService.AddBilling(user, p)
 
@@ -89,17 +88,16 @@ func TestBillingService_GetPaymentAdapter(t *testing.T) {
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	billingR := mock.NewMockBillingPGRepository(ctrl)
+	billingR := mock.NewMockBillingRepositoryInterface(ctrl)
 	billingService := NewBillingService(billingR)
 
 	t.Run("InvalidPayment", func(t *testing.T) {
 		t.Parallel()
 		user := userModel.User{
-			ID:         1,
-			Name:       "1",
-			Cif:        "1",
-			Country:    "1",
-			PostalCode: "1",
+			UUID:       "1",
+			McUsername: "1",
+			Email:      "1",
+			Credits:    11,
 		}
 
 		p := billingModel.CreateCustomer{
@@ -108,8 +106,8 @@ func TestBillingService_GetPaymentAdapter(t *testing.T) {
 				Email: "test3@test.com",
 				Desc:  "a 3rd test customer",
 				Card: &billingModel.CardParams{
-					Name:     user.Name,
-					Number:   user.Cif,
+					Name:     user.McUsername,
+					Number:   user.UUID,
 					ExpYear:  time.Now().Year() + 1,
 					ExpMonth: 1,
 				},
@@ -130,17 +128,16 @@ func TestBillingService_GetPaymentAdapter2(t *testing.T) {
 
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-	billingR := mock.NewMockBillingPGRepository(ctrl)
+	billingR := mock.NewMockBillingRepositoryInterface(ctrl)
 	billingService := NewBillingService(billingR)
 
 	t.Run("InvalidPayment", func(t *testing.T) {
 		t.Parallel()
 		user := userModel.User{
-			ID:         1,
-			Name:       "1",
-			Cif:        "1",
-			Country:    "1",
-			PostalCode: "1",
+			UUID:       "1",
+			Email:      "1",
+			McUsername: "1",
+			Credits:    12,
 		}
 
 		p := billingModel.CreateCustomer{
@@ -149,8 +146,8 @@ func TestBillingService_GetPaymentAdapter2(t *testing.T) {
 				Email: "test3@test.com",
 				Desc:  "a 3rd test customer",
 				Card: &billingModel.CardParams{
-					Name:     user.Name,
-					Number:   user.Cif,
+					Name:     user.McUsername,
+					Number:   user.UUID,
 					ExpYear:  time.Now().Year() + 1,
 					ExpMonth: 1,
 				},

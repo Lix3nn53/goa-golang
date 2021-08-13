@@ -14,10 +14,10 @@ type userRepository struct {
 
 //UserRepositoryInterface define the user repository interface methods
 type UserRepositoryInterface interface {
-	FindByID(id int) (user *userModel.User, err error)
-	RemoveByID(id int) error
-	UpdateByID(id int, user userModel.UpdateUser) error
-	Create(userModel.CreateUser) (user *userModel.User, err error)
+	FindByID(uuid string) (user *userModel.User, err error)
+	RemoveByID(uuid string) error
+	UpdateByID(uuid string, user userModel.UpdateUser) error
+	Create(uuid string, create userModel.CreateUser) (user *userModel.User, err error)
 }
 
 // NewUserRepository implements the user repository interface.
@@ -28,13 +28,13 @@ func NewUserRepository(db *storage.DbStore) UserRepositoryInterface {
 }
 
 // FindByID implements the method to find a user from the store
-func (r *userRepository) FindByID(id int) (user *userModel.User, err error) {
+func (r *userRepository) FindByID(uuid string) (user *userModel.User, err error) {
 	user = &userModel.User{}
 
 	var query = "SELECT id, cif, name, postal_code, country FROM users WHERE id = $1"
-	row := r.db.QueryRow(query, id)
+	row := r.db.QueryRow(query, uuid)
 
-	if err := row.Scan(&user.ID, &user.Cif, &user.Name, &user.PostalCode, &user.Country); err != nil {
+	if err := row.Scan(&user.UUID, &user.Email, &user.McUsername, &user.Credits); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, appError.ErrNotFound
 		}
@@ -46,15 +46,15 @@ func (r *userRepository) FindByID(id int) (user *userModel.User, err error) {
 }
 
 // RemoveByID implements the method to remove a user from the store
-func (r *userRepository) RemoveByID(id int) error {
+func (r *userRepository) RemoveByID(uuid string) error {
 
-	_, err := r.db.Exec(`DELETE FROM users WHERE id = $1;`, id)
+	_, err := r.db.Exec(`DELETE FROM users WHERE id = $1;`, uuid)
 	return err
 }
 
 // UpdateByID implements the method to update a user into the store
-func (r *userRepository) UpdateByID(id int, user userModel.UpdateUser) error {
-	result, err := r.db.Exec("UPDATE users SET name = $1, cif = $2, postal_code = $3, country = $4 where id = $5", user.Name, user.Cif, user.PostalCode, user.Country, id)
+func (r *userRepository) UpdateByID(uuid string, user userModel.UpdateUser) error {
+	result, err := r.db.Exec("UPDATE users SET email = $1, mc_username = $2, credits = $3 where id = $4", user.Email, user.McUsername, user.Credits, uuid)
 	if err != nil {
 		return err
 	}
@@ -72,10 +72,9 @@ func (r *userRepository) UpdateByID(id int, user userModel.UpdateUser) error {
 }
 
 // Create implements the method to persist a new user
-func (r *userRepository) Create(UserSignUp userModel.CreateUser) (user *userModel.User, err error) {
-	createUserQuery := `INSERT INTO users (name, cif, postal_code, country) 
-		VALUES ($1, $2, $3, $4)
-		RETURNING id`
+func (r *userRepository) Create(uuid string, UserSignUp userModel.CreateUser) (user *userModel.User, err error) {
+	createUserQuery := `INSERT INTO goa_web_player (uuid, email, mc_username, credits) 
+		VALUES ($1, $2, $3, $4)`
 
 	stmt, err := r.db.Prepare(createUserQuery)
 	if err != nil {
@@ -83,17 +82,11 @@ func (r *userRepository) Create(UserSignUp userModel.CreateUser) (user *userMode
 	}
 	defer stmt.Close()
 
-	var userID int
-	err = stmt.QueryRow(UserSignUp.Name, UserSignUp.Cif, UserSignUp.PostalCode, UserSignUp.Country).Scan(&userID)
+	var userModel userModel.User
+	err = stmt.QueryRow(uuid, UserSignUp.Email, UserSignUp.McUsername, UserSignUp.Credits).Scan(&userModel)
 	if err != nil {
 		return nil, err
 	}
 
-	return &userModel.User{
-		ID:         userID,
-		Name:       UserSignUp.Name,
-		Cif:        UserSignUp.Cif,
-		Country:    UserSignUp.Country,
-		PostalCode: UserSignUp.PostalCode,
-	}, nil
+	return &userModel, nil
 }

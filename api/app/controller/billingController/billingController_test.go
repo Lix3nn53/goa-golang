@@ -28,7 +28,7 @@ func TestBillingController_Store(t *testing.T) {
 	defer ctrl.Finish()
 
 	userUC := mock.NewMockUserServiceInterface(ctrl)
-	billUC := mock.NewMockBillingServiceCase(ctrl)
+	billUC := mock.NewMockBillingServiceInterface(ctrl)
 
 	// payUc := mock.NewMockPaymentAdapterCase(ctrl)
 
@@ -76,7 +76,7 @@ func TestBillingController_Store2(t *testing.T) {
 	defer ctrl.Finish()
 
 	userUC := mock.NewMockUserServiceInterface(ctrl)
-	billUC := mock.NewMockBillingServiceCase(ctrl)
+	billUC := mock.NewMockBillingServiceInterface(ctrl)
 
 	// payUc := mock.NewMockPaymentAdapterCase(ctrl)
 
@@ -88,19 +88,17 @@ func TestBillingController_Store2(t *testing.T) {
 	t.Run("InvalidIdentifyPayment", func(t *testing.T) {
 
 		userExpected := userModel.User{
-			ID:         1,
-			Name:       "a",
-			Cif:        "a",
-			Country:    "a",
-			PostalCode: "a",
+			UUID:       "1",
+			Email:      "a",
+			McUsername: "a",
+			Credits:    13,
 		}
 
 		userRes := &userModel.User{
-			ID:         userExpected.ID,
-			Name:       userExpected.Name,
-			Cif:        userExpected.Cif,
-			Country:    userExpected.Country,
-			PostalCode: userExpected.PostalCode,
+			UUID:       userExpected.UUID,
+			Email:      userExpected.Email,
+			McUsername: userExpected.McUsername,
+			Credits:    userExpected.Credits,
 		}
 
 		userUC.EXPECT().FindByID(1).Return(userRes, nil)
@@ -113,8 +111,9 @@ func TestBillingController_Store2(t *testing.T) {
 				Email: "11@test.com",
 				Desc:  "a 3rd test customer",
 				Card: &billingModel.CardParams{
-					Name:     userRes.Name,
-					Number:   userRes.Cif,
+					Name: userRes.McUsername,
+					// TODO fix uuids to actual numbers
+					Number:   userRes.UUID,
 					ExpYear:  time.Now().Year() + 1,
 					ExpMonth: 1,
 				},
@@ -146,7 +145,7 @@ func TestBillingController_Store3(t *testing.T) {
 	defer ctrl.Finish()
 
 	userUC := mock.NewMockUserServiceInterface(ctrl)
-	billUC := mock.NewMockBillingServiceCase(ctrl)
+	billUC := mock.NewMockBillingServiceInterface(ctrl)
 
 	// payUc := mock.NewMockPaymentAdapterCase(ctrl)
 
@@ -157,11 +156,10 @@ func TestBillingController_Store3(t *testing.T) {
 
 	t.Run("Correct", func(t *testing.T) {
 		userRes := &userModel.User{
-			ID:         1,
-			Name:       "a",
-			Cif:        "a",
-			Country:    "a",
-			PostalCode: "a",
+			UUID:       "1",
+			Email:      "a",
+			McUsername: "a",
+			Credits:    14,
 		}
 
 		userUC.EXPECT().FindByID(1).Return(userRes, nil)
@@ -172,8 +170,8 @@ func TestBillingController_Store3(t *testing.T) {
 				Email: "test3@test.com",
 				Desc:  "a 3rd test customer",
 				Card: &billingModel.CardParams{
-					Name:     userRes.Name,
-					Number:   userRes.Cif,
+					Name:     userRes.McUsername,
+					Number:   userRes.UUID,
 					ExpYear:  time.Now().Year() + 1,
 					ExpMonth: 1,
 				},

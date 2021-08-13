@@ -7,7 +7,6 @@ import (
 	"goa-golang/app/service/userService"
 	"goa-golang/internal/logger"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -37,12 +36,7 @@ func NewBillingController(service billingService.BillingServiceInterface, uservi
 // Store implements the method to validate the params to store a  new payment method and handle the service
 func (bc *BillingController) AddCustomer(c *gin.Context) {
 
-	id, err := strconv.Atoi(c.Param("id"))
-
-	if err != nil {
-		c.Status(http.StatusBadRequest)
-		return
-	}
+	id := c.Param("id")
 
 	user, err := bc.uservice.FindByID(id)
 	if err != nil {

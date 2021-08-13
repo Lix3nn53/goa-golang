@@ -2,25 +2,22 @@ package userModel
 
 // User represents user resources.
 type User struct {
-	ID         int    `json:"id"`
-	Name       string `json:"name"`
-	Cif        string `json:"cif"`
-	Country    string `json:"country"`
-	PostalCode string `json:"postal_code"`
+	UUID       string `json:"uuid"`
+	Email      string `json:"email"`
+	McUsername string `json:"mc_username"`
+	Credits    int    `json:"credits"`
 }
 
 // UpdateUser represents user resources.
 type UpdateUser struct {
-	Name       string `json:"name" validate:"required"`
-	Cif        string `json:"cif" validate:"required"`
-	Country    string `json:"country" validate:"required"`
-	PostalCode string `json:"postal_code" validate:"required"`
+	Email      string `json:"email" validate:"required"`
+	McUsername string `json:"mc_username" validate:"required"`
+	Credits    int    `json:"credits" validate:"required"`
 }
 
 // CreateUser represents user resources.
 type CreateUser struct {
-	Name       string `json:"name" validate:"required"`
-	Cif        string `json:"cif" validate:"required"`
-	Country    string `json:"country" validate:"required"`
-	PostalCode string `json:"postal_code" validate:"required"`
+	Email      string `json:"email" validate:"required"`
+	McUsername string `json:"mc_username" validate:"required"`
+	Credits    int    `json:"credits" validate:"required"`
 }

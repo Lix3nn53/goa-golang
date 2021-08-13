@@ -7,7 +7,7 @@ import (
 
 //UserServiceInterface define the user service interface methods
 type AuthServiceInterface interface {
-	GoogleOauth2(id int) (user *userModel.User, err error)
+	GoogleOauth2() (user *userModel.User, err error)
 }
 
 // billingService handles communication with the user repository
@@ -23,6 +23,6 @@ func NewAuthService(authRepo authRepository.AuthRepositoryInterface) AuthService
 }
 
 // FindByID implements the method to find a user model by primary key
-func (s *AuthService) GoogleOauth2(id int) (user *userModel.User, err error) {
-	return s.authRepo.GoogleOauth2(id)
+func (s *AuthService) GoogleOauth2() (user *userModel.User, err error) {
+	return s.authRepo.GoogleOauth2()
 }

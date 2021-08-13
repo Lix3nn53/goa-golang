@@ -49,35 +49,32 @@ func TestUserService_Store(t *testing.T) {
 	userService := NewUserService(userR)
 
 	reqValue := userModel.CreateUser{
-		Name:       "a",
-		Cif:        "a@a.com",
-		Country:    "a",
-		PostalCode: "a",
+		Email:      "a@a.com",
+		McUsername: "a",
+		Credits:    7,
 	}
 
 	t.Run("Store", func(t *testing.T) {
 		t.Parallel()
 
 		user := userModel.CreateUser{
-			Name:       reqValue.Name,
-			Cif:        reqValue.Cif,
-			Country:    reqValue.Country,
-			PostalCode: reqValue.PostalCode,
+			Email:      reqValue.Email,
+			McUsername: reqValue.McUsername,
+			Credits:    reqValue.Credits,
 		}
 
-		userID := int(1)
+		userID := string("1")
 		userRes := &userModel.User{
-			ID:         userID,
-			Name:       user.Name,
-			Cif:        user.Cif,
-			Country:    user.Country,
-			PostalCode: user.PostalCode,
+			UUID:       userID,
+			Email:      user.Email,
+			McUsername: user.McUsername,
+			Credits:    user.Credits,
 		}
 		var err error
 
-		userR.EXPECT().Create(user).Return(userRes, err)
+		userR.EXPECT().Create(userID, user).Return(userRes, err)
 
-		response, err := userService.Store(reqValue)
+		response, err := userService.Store(userID, reqValue)
 
 		require.NoError(t, err)
 		require.NotNil(t, response)

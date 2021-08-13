@@ -5,7 +5,6 @@ import (
 	"goa-golang/app/service/authService"
 	"goa-golang/internal/logger"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -31,15 +30,7 @@ func NewUserController(service authService.AuthServiceInterface, logger logger.L
 
 // Find implements the method to handle the service to find a user by the primary key
 func (uc *AuthController) GoogleOauth2(c *gin.Context) {
-
-	id, err := strconv.Atoi(c.Param("id"))
-
-	if err != nil {
-		c.Status(http.StatusBadRequest)
-		return
-	}
-
-	user, err := uc.service.GoogleOauth2(id)
+	user, err := uc.service.GoogleOauth2()
 	if err != nil {
 		uc.logger.Error(err.Error())
 		c.Status(errorNotFound.ParseError(err))

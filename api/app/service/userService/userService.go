@@ -7,10 +7,10 @@ import (
 
 //UserServiceInterface define the user service interface methods
 type UserServiceInterface interface {
-	FindByID(id int) (user *userModel.User, err error)
-	RemoveByID(id int) error
-	UpdateByID(id int, user userModel.UpdateUser) error
-	Store(user userModel.CreateUser) (*userModel.User, error)
+	FindByID(uuid string) (user *userModel.User, err error)
+	RemoveByID(uuid string) error
+	UpdateByID(uuid string, user userModel.UpdateUser) error
+	Store(uuid string, user userModel.CreateUser) (*userModel.User, error)
 }
 
 // billingService handles communication with the user repository
@@ -26,21 +26,21 @@ func NewUserService(userRepo userRepository.UserRepositoryInterface) UserService
 }
 
 // FindByID implements the method to find a user model by primary key
-func (s *UserService) FindByID(id int) (user *userModel.User, err error) {
-	return s.userRepo.FindByID(id)
+func (s *UserService) FindByID(uuid string) (user *userModel.User, err error) {
+	return s.userRepo.FindByID(uuid)
 }
 
 // FindByID implements the method to remove a user model by primary key
-func (s *UserService) RemoveByID(id int) error {
-	return s.userRepo.RemoveByID(id)
+func (s *UserService) RemoveByID(uuid string) error {
+	return s.userRepo.RemoveByID(uuid)
 }
 
 // FindByID implements the method to update a user model by primary key
-func (s *UserService) UpdateByID(id int, user userModel.UpdateUser) error {
-	return s.userRepo.UpdateByID(id, user)
+func (s *UserService) UpdateByID(uuid string, user userModel.UpdateUser) error {
+	return s.userRepo.UpdateByID(uuid, user)
 }
 
 // FindByID implements the method to store a new a user model
-func (s *UserService) Store(user userModel.CreateUser) (*userModel.User, error) {
-	return s.userRepo.Create(user)
+func (s *UserService) Store(uuid string, user userModel.CreateUser) (*userModel.User, error) {
+	return s.userRepo.Create(uuid, user)
 }
