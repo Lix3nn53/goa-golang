@@ -27,7 +27,7 @@ func setupRouter() (*gin.Engine, logger.Logger) {
 		logger.Fatalf(err.Error())
 	}
 
-	db := storage.InitializeDB()
+	db := storage.InitializeDB(logger)
 	dbCache := storage.InitializeCache()
 	router := route.Setup(db, dbCache, logger)
 

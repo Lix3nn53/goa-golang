@@ -2,11 +2,11 @@ package storage
 
 import (
 	"fmt"
-	"log"
+	"goa-golang/internal/logger"
 	"os"
 	"time"
 
-	_ "github.com/jackc/pgx/stdlib" // pgx driver
+	_ "github.com/go-sql-driver/mysql" // mysql driver
 	"github.com/jmoiron/sqlx"
 )
 
@@ -23,17 +23,10 @@ type DbStore struct {
 }
 
 // InitializeDB Opening a storage and save the reference to `Database` struct.
-func InitializeDB() *DbStore {
-	dataSourceName := fmt.Sprintf("host=%s port=%s user=%s dbname=%s sslmode=disable TimeZone=Europe/Paris password=%s",
-		os.Getenv("DB_HOST"),
-		os.Getenv("DB_PORT"),
-		os.Getenv("DB_USERNAME"),
-		os.Getenv("DB_DATABASE"),
-		os.Getenv("DB_PASSWORD"),
-	)
-
-	db, err := sqlx.Connect("pgx", dataSourceName)
+func InitializeDB(logger logger.Logger) *DbStore {
+	db, err := sqlx.Connect("mysql", os.Getenv("DB_CONNECTION_STRING"))
 	if err != nil {
+		logger.Fatalf(err.Error())
 		return nil
 	}
 
@@ -47,9 +40,9 @@ func InitializeDB() *DbStore {
 		err := db.Ping()
 		if err != nil {
 			if retryCount == 0 {
-				log.Fatalf("Not able to establish connection to database")
+				logger.Fatalf("Not able to establish connection to database")
 			}
-			log.Printf(fmt.Sprintf("Could not connect to database. Wait 2 seconds. %d retries left...", retryCount))
+			logger.Infof(fmt.Sprintf("Could not connect to database. Wait 2 seconds. %d retries left...", retryCount))
 			retryCount--
 			time.Sleep(2 * time.Second)
 		} else {
