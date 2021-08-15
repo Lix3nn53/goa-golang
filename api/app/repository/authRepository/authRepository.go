@@ -89,7 +89,7 @@ func (r *authRepository) GoogleOauth2() (user *userModel.User, err error) {
 	// TODO
 	user = &userModel.User{}
 
-	var query = "SELECT uuid, email, mc_username, credits FROM goa_web_player WHERE id = $1"
+	var query = "SELECT uuid, email, mc_username, credits FROM goa_player_web WHERE id = $1"
 	row := r.db.QueryRow(query, userId)
 
 	if err := row.Scan(&user.UUID, &user.Email, &user.McUsername, &user.Credits); err != nil {
