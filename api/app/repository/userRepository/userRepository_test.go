@@ -59,14 +59,13 @@ func TestUserRepository_FindByID(t *testing.T) {
 	}
 
 	rows := sqlmock.NewRows(columns).AddRow(
-		userID,
 		mockUser.UUID,
 		mockUser.Email,
 		mockUser.McUsername,
 		mockUser.Credits,
 	)
 
-	mock.ExpectQuery("SELECT id, cif, name, postal_code, country FROM users WHERE id = $1").WithArgs(userID).WillReturnRows(rows)
+	mock.ExpectQuery("SELECT uuid, email, mc_username, credits FROM goa_player_web WHERE id = $1").WithArgs(userID).WillReturnRows(rows)
 
 	foundUser, err := userPGRepository.FindByID(mockUser.UUID)
 
@@ -85,7 +84,7 @@ func TestUserRepository_FindByID_IncorrectID(t *testing.T) {
 
 	userPGRepository := NewUserRepository(&storage.DbStore{DB: sqlxDB})
 
-	columns := []string{"id", "cif", "name", "postal_code", "country"}
+	columns := []string{"uuid", "email", "mc_username", "credits"}
 	userID := string("1")
 	mockUser := &userModel.User{
 		UUID:       userID,
@@ -101,7 +100,7 @@ func TestUserRepository_FindByID_IncorrectID(t *testing.T) {
 		mockUser.Credits,
 	)
 
-	mock.ExpectQuery("SELECT id, cif, name, postal_code, country FROM users WHERE id = $1").WithArgs(2).WillReturnRows(rows)
+	mock.ExpectQuery("SELECT uuid, email, mc_username, credits FROM goa_player_web WHERE id = $1").WithArgs(2).WillReturnRows(rows)
 
 	foundUser, err := userPGRepository.FindByID(mockUser.UUID)
 
@@ -126,8 +125,8 @@ func TestUserRepository_Create(t *testing.T) {
 		Credits:    3,
 	}
 
-	ep := mock.ExpectPrepare("INSERT INTO users (uuid, email, mc_username, credits) VALUES ($1, $2, $3, $4)").WillBeClosed()
-	ep.ExpectQuery().WithArgs(userID, mockUser.Email, mockUser.McUsername, mockUser.Credits).WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(userID))
+	ep := mock.ExpectPrepare("INSERT INTO goa_player_web (uuid, email, mc_username, credits) VALUES ($1, $2, $3, $4)").WillBeClosed()
+	ep.ExpectQuery().WithArgs(userID, mockUser.Email, mockUser.McUsername, mockUser.Credits).WillReturnRows(sqlmock.NewRows([]string{"uuid"}).AddRow(userID))
 
 	foundUser, err := userPGRepository.Create(userID, mockUser)
 	require.NoError(t, err)

@@ -2,10 +2,10 @@ package userModel
 
 // User represents user resources.
 type User struct {
-	UUID       string `json:"uuid"`
-	Email      string `json:"email"`
-	McUsername string `json:"mc_username"`
-	Credits    int    `json:"credits"`
+	UUID       string `json:"uuid" db:"uuid"`
+	Email      string `json:"email" db:"email"`
+	McUsername string `json:"mc_username" db:"mc_username"`
+	Credits    int    `json:"credits" db:"credits"`
 }
 
 // UpdateUser represents user resources.

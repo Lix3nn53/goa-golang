@@ -31,7 +31,7 @@ func NewUserRepository(db *storage.DbStore) UserRepositoryInterface {
 func (r *userRepository) FindByID(uuid string) (user *userModel.User, err error) {
 	user = &userModel.User{}
 
-	var query = "SELECT id, cif, name, postal_code, country FROM users WHERE id = $1"
+	var query = "SELECT uuid, email, mc_username, credits FROM goa_player_web WHERE id = $1"
 	row := r.db.QueryRow(query, uuid)
 
 	if err := row.Scan(&user.UUID, &user.Email, &user.McUsername, &user.Credits); err != nil {
@@ -48,13 +48,13 @@ func (r *userRepository) FindByID(uuid string) (user *userModel.User, err error)
 // RemoveByID implements the method to remove a user from the store
 func (r *userRepository) RemoveByID(uuid string) error {
 
-	_, err := r.db.Exec(`DELETE FROM users WHERE id = $1;`, uuid)
+	_, err := r.db.Exec(`DELETE FROM goa_player_web WHERE id = $1;`, uuid)
 	return err
 }
 
 // UpdateByID implements the method to update a user into the store
 func (r *userRepository) UpdateByID(uuid string, user userModel.UpdateUser) error {
-	result, err := r.db.Exec("UPDATE users SET email = $1, mc_username = $2, credits = $3 where id = $4", user.Email, user.McUsername, user.Credits, uuid)
+	result, err := r.db.Exec("UPDATE goa_player_web SET email = $1, mc_username = $2, credits = $3 where id = $4", user.Email, user.McUsername, user.Credits, uuid)
 	if err != nil {
 		return err
 	}
@@ -82,11 +82,16 @@ func (r *userRepository) Create(uuid string, UserSignUp userModel.CreateUser) (u
 	}
 	defer stmt.Close()
 
-	var userModel userModel.User
-	err = stmt.QueryRow(uuid, UserSignUp.Email, UserSignUp.McUsername, UserSignUp.Credits).Scan(&userModel)
+	var userUUID string
+	err = stmt.QueryRow(uuid, UserSignUp.Email, UserSignUp.McUsername, UserSignUp.Credits).Scan(&userUUID)
 	if err != nil {
 		return nil, err
 	}
 
-	return &userModel, nil
+	return &userModel.User{
+		UUID:       uuid,
+		Email:      UserSignUp.Email,
+		McUsername: UserSignUp.McUsername,
+		Credits:    UserSignUp.Credits,
+	}, nil
 }
