@@ -1,7 +1,6 @@
 package userRepository
 
 import (
-	"database/sql"
 	appError "goa-golang/app/error"
 	"goa-golang/app/model/userModel"
 	"goa-golang/internal/storage"
@@ -35,10 +34,6 @@ func (r *userRepository) FindByID(uuid string) (user *userModel.User, err error)
 	row := r.db.QueryRow(query, uuid)
 
 	if err := row.Scan(&user.UUID, &user.Email, &user.McUsername, &user.Credits); err != nil {
-		if err == sql.ErrNoRows {
-			return nil, appError.ErrNotFound
-		}
-
 		return nil, err
 	}
 
