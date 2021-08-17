@@ -1,4 +1,6 @@
-//+build wireinject
+//go:build wireinject
+// +build wireinject
+
 //
 // The build tag makes sure the stub is not built in the final build.
 //
@@ -7,38 +9,53 @@
 package dic
 
 import (
-	"goa-golang/app/controller/billingController"
-	"goa-golang/app/controller/userController"
-	"goa-golang/app/repository/billingRepository"
+	"goa-golang/app/controller/authController"
 	"goa-golang/app/repository/userRepository"
-	"goa-golang/app/service/billingService"
-	"goa-golang/app/service/userService"
+	"goa-golang/app/service/authService"
 	"goa-golang/internal/logger"
 	"goa-golang/internal/storage"
 
 	"github.com/google/wire"
 )
 
-func initUserService(db *storage.DbStore) userService.UserServiceInterface {
-	wire.Build(userRepository.NewUserRepository, userService.NewUserService)
+func initUserRepository(db *storage.DbStore) userRepository.UserRepositoryInterface {
+	wire.Build(userRepository.NewUserRepository)
 
-	return &userService.UserService{}
+	return &userRepository.UserRepository{}
 }
 
-func initUserController(us userService.UserServiceInterface, logger logger.Logger) userController.UserControllerInterface {
-	wire.Build(userController.NewUserController)
+// func initUserService(userRepo userRepository.UserRepositoryInterface) userService.UserServiceInterface {
+// 	wire.Build(userService.NewUserService)
 
-	return &userController.UserController{}
+// 	return &userService.UserService{}
+// }
+
+// func initUserController(us userService.UserServiceInterface, logger logger.Logger) userController.UserControllerInterface {
+// 	wire.Build(userController.NewUserController)
+
+// 	return &userController.UserController{}
+// }
+
+func initAuthService(userRepo userRepository.UserRepositoryInterface, logger logger.Logger) authService.AuthServiceInterface {
+	wire.Build(authService.NewAuthService)
+
+	return &authService.AuthService{}
 }
 
-func initBillingService(db *storage.DbStore) billingService.BillingServiceInterface {
-	wire.Build(billingRepository.NewBillingRepository, billingService.NewBillingService)
+func initAuthController(us authService.AuthServiceInterface, logger logger.Logger) authController.AuthControllerInterface {
+	wire.Build(authController.NewAuthController)
 
-	return &billingService.BillingService{}
+	return &authController.AuthController{}
 }
 
-func initBillingController(ub billingService.BillingServiceInterface, us userService.UserServiceInterface, logger logger.Logger) billingController.BillingControllerInterface {
-	wire.Build(billingController.NewBillingController)
+// func initBillingService(db *storage.DbStore) billingService.BillingServiceInterface {
+// 	wire.Build(billingRepository.NewBillingRepository, billingService.NewBillingService)
 
-	return &billingController.BillingController{}
-}
+// 	return &billingService.BillingService{}
+// }
+
+// func initBillingController(ub billingService.BillingServiceInterface, us userService.UserServiceInterface, logger logger.Logger) billingController.BillingControllerInterface {
+// 	wire.Build(billingController.NewBillingController)
+
+// 	return &billingController.BillingController{}
+// }

@@ -7,7 +7,7 @@ import (
 )
 
 // billingRepository handles communication with the user store
-type userRepository struct {
+type UserRepository struct {
 	db *storage.DbStore
 }
 
@@ -21,13 +21,13 @@ type UserRepositoryInterface interface {
 
 // NewUserRepository implements the user repository interface.
 func NewUserRepository(db *storage.DbStore) UserRepositoryInterface {
-	return &userRepository{
+	return &UserRepository{
 		db,
 	}
 }
 
 // FindByID implements the method to find a user from the store
-func (r *userRepository) FindByID(uuid string) (user *userModel.User, err error) {
+func (r *UserRepository) FindByID(uuid string) (user *userModel.User, err error) {
 	user = &userModel.User{}
 
 	var query = "SELECT uuid, email, mc_username, credits FROM goa_player_web WHERE id = $1"
@@ -41,14 +41,14 @@ func (r *userRepository) FindByID(uuid string) (user *userModel.User, err error)
 }
 
 // RemoveByID implements the method to remove a user from the store
-func (r *userRepository) RemoveByID(uuid string) error {
+func (r *UserRepository) RemoveByID(uuid string) error {
 
 	_, err := r.db.Exec(`DELETE FROM goa_player_web WHERE id = $1;`, uuid)
 	return err
 }
 
 // UpdateByID implements the method to update a user into the store
-func (r *userRepository) UpdateByID(uuid string, user userModel.UpdateUser) error {
+func (r *UserRepository) UpdateByID(uuid string, user userModel.UpdateUser) error {
 	result, err := r.db.Exec("UPDATE goa_player_web SET email = $1, mc_username = $2, credits = $3 where id = $4", user.Email, user.McUsername, user.Credits, uuid)
 	if err != nil {
 		return err
@@ -67,7 +67,7 @@ func (r *userRepository) UpdateByID(uuid string, user userModel.UpdateUser) erro
 }
 
 // Create implements the method to persist a new user
-func (r *userRepository) Create(uuid string, UserSignUp userModel.CreateUser) (user *userModel.User, err error) {
+func (r *UserRepository) Create(uuid string, UserSignUp userModel.CreateUser) (user *userModel.User, err error) {
 	createUserQuery := `INSERT INTO goa_player_web (uuid, email, mc_username, credits) 
 		VALUES ($1, $2, $3, $4)`
 

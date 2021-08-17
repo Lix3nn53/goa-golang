@@ -52,21 +52,13 @@ func Setup(db *storage.DbStore, dbCache *storage.DbCache, logger logger.Logger) 
 		testMiddleware := middleware.NewTestMiddleware(logger)
 		routev1.SetupDocsRoute(v1, testMiddleware)
 
-		users := v1.Group("/users")
+		auth := v1.Group("/auth")
 		{
-			userService := dic.InitUserService(db)
-			userController := dic.InitUserController(userService, logger)
-			routev1.SetupUserRoute(users, userController)
+			userRepo := dic.InitUserRepository(db)
+			authService := dic.InitAuthService(userRepo, logger)
+			authCont := dic.InitAuthController(authService, logger)
 
-			user := users.Group(":id")
-			{
-				billingService := dic.InitBillingService(db)
-				billingController := dic.InitBillingController(billingService, userService, logger)
-				userBilling := user.Group("/billing")
-				{
-					routev1.SetupBillingRoute(userBilling, billingController)
-				}
-			}
+			routev1.SetupAuthRoute(auth, authCont)
 		}
 	}
 

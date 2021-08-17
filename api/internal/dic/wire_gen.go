@@ -5,36 +5,26 @@
 package dic
 
 import (
-	"goa-golang/app/controller/billingController"
-	"goa-golang/app/controller/userController"
-	"goa-golang/app/repository/billingRepository"
+	"goa-golang/app/controller/authController"
 	"goa-golang/app/repository/userRepository"
-	"goa-golang/app/service/billingService"
-	"goa-golang/app/service/userService"
+	"goa-golang/app/service/authService"
 	"goa-golang/internal/logger"
 	"goa-golang/internal/storage"
 )
 
 // Injectors from wire.go:
 
-func InitUserService(db *storage.DbStore) userService.UserServiceInterface {
+func InitUserRepository(db *storage.DbStore) userRepository.UserRepositoryInterface {
 	userRepositoryInterface := userRepository.NewUserRepository(db)
-	userServiceInterface := userService.NewUserService(userRepositoryInterface)
-	return userServiceInterface
+	return userRepositoryInterface
 }
 
-func InitUserController(us userService.UserServiceInterface, logger2 logger.Logger) userController.UserControllerInterface {
-	userControllerInterface := userController.NewUserController(us, logger2)
-	return userControllerInterface
+func InitAuthService(userRepo userRepository.UserRepositoryInterface, logger2 logger.Logger) authService.AuthServiceInterface {
+	authServiceInterface := authService.NewAuthService(userRepo, logger2)
+	return authServiceInterface
 }
 
-func InitBillingService(db *storage.DbStore) billingService.BillingServiceInterface {
-	billingRepositoryInterface := billingRepository.NewBillingRepository(db)
-	billingServiceInterface := billingService.NewBillingService(billingRepositoryInterface)
-	return billingServiceInterface
-}
-
-func InitBillingController(ub billingService.BillingServiceInterface, us userService.UserServiceInterface, logger2 logger.Logger) billingController.BillingControllerInterface {
-	billingControllerInterface := billingController.NewBillingController(ub, us, logger2)
-	return billingControllerInterface
+func InitAuthController(us authService.AuthServiceInterface, logger2 logger.Logger) authController.AuthControllerInterface {
+	authControllerInterface := authController.NewAuthController(us, logger2)
+	return authControllerInterface
 }

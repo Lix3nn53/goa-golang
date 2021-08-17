@@ -15,7 +15,7 @@ import (
 
 //UserServiceInterface define the user service interface methods
 type AuthServiceInterface interface {
-	GoogleOauth2() (user *userModel.User, err error)
+	GoogleOauth2(code string) (user *userModel.User, err error)
 }
 
 // billingService handles communication with the user repository
@@ -33,7 +33,7 @@ func NewAuthService(userRepo userRepository.UserRepositoryInterface, logger logg
 }
 
 // FindByID implements the method to find a user model by primary key
-func (s *AuthService) GoogleOauth2() (user *userModel.User, err error) {
+func (s *AuthService) GoogleOauth2(code string) (user *userModel.User, err error) {
 	tokenUrl := "https://oauth2.googleapis.com/token"
 	userProfileUrl := "https://www.googleapis.com/oauth2/v2/userinfo"
 
@@ -41,10 +41,10 @@ func (s *AuthService) GoogleOauth2() (user *userModel.User, err error) {
 
 	// Access token request
 	data := map[string]interface{}{
-		"code":          "http://auth.xboxlive.com",
+		"code":          code,
 		"client_id":     os.Getenv("GOOGLE_CLIENT_ID"),
 		"client_secret": os.Getenv("GOOGLE_CLIENT_SECRET"),
-		"redirect_uri":  "http://localhost:3000/login/oauth2/callback",
+		"redirect_uri":  "http://localhost:3000/auth/callback",
 		"grant_type":    "authorization_code",
 	}
 
@@ -88,6 +88,12 @@ func (s *AuthService) GoogleOauth2() (user *userModel.User, err error) {
 		return nil, err
 	}
 	userId := userInfoResponseJson["id"].(string)
+
+	j, err := json.MarshalIndent(userInfoResponseJson, "", "\t")
+	if err != nil {
+		return nil, err
+	}
+	s.logger.Infof(string(j))
 
 	// FIND USER IF EXISTS
 	user, err = s.userRepo.FindByID(userId)

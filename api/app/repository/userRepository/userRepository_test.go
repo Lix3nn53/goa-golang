@@ -25,7 +25,7 @@ func TestUserRepositoryInit(t *testing.T) {
 			args: args{
 				db: nil,
 			},
-			want: &userRepository{
+			want: &UserRepository{
 				db: nil,
 			},
 		},

@@ -1,4 +1,4 @@
-package userController
+package authController
 
 import (
 	errorNotFound "goa-golang/app/error"
@@ -21,7 +21,7 @@ type AuthController struct {
 }
 
 // NewUserController implements the user controller interface.
-func NewUserController(service authService.AuthServiceInterface, logger logger.Logger) AuthControllerInterface {
+func NewAuthController(service authService.AuthServiceInterface, logger logger.Logger) AuthControllerInterface {
 	return &AuthController{
 		service,
 		logger,
@@ -30,7 +30,9 @@ func NewUserController(service authService.AuthServiceInterface, logger logger.L
 
 // Find implements the method to handle the service to find a user by the primary key
 func (uc *AuthController) GoogleOauth2(c *gin.Context) {
-	user, err := uc.service.GoogleOauth2()
+	code := c.Query("code")
+
+	user, err := uc.service.GoogleOauth2(code)
 	if err != nil {
 		uc.logger.Error(err.Error())
 		c.Status(errorNotFound.ParseError(err))
