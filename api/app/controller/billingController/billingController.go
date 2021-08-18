@@ -1,7 +1,7 @@
 package billingController
 
 import (
-	errorNotFound "goa-golang/app/error"
+	appError "goa-golang/app/error"
 	"goa-golang/app/model/billingModel"
 	"goa-golang/app/service/billingService"
 	"goa-golang/app/service/userService"
@@ -41,7 +41,7 @@ func (bc *BillingController) AddCustomer(c *gin.Context) {
 	user, err := bc.uservice.FindByID(id)
 	if err != nil {
 		bc.logger.Error(err.Error())
-		c.Status(errorNotFound.ParseError(err))
+		appError.Respond(c, http.StatusNotFound, err)
 		return
 	}
 
@@ -63,14 +63,14 @@ func (bc *BillingController) AddCustomer(c *gin.Context) {
 	p, err := bc.service.GetPaymentAdapter(rq)
 	if err != nil {
 		bc.logger.Error(err.Error())
-		c.Status(errorNotFound.ParseError(err))
+		appError.Respond(c, http.StatusNotFound, err)
 		return
 	}
 	err = bc.service.AddBilling(*user, *p)
 
 	if err != nil {
 		bc.logger.Error(err.Error())
-		c.Status(errorNotFound.ParseError(err))
+		appError.Respond(c, http.StatusNotFound, err)
 		return
 	}
 

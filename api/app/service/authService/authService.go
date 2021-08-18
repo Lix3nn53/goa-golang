@@ -7,6 +7,7 @@ import (
 	"errors"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"goa-golang/app/model/userModel"
@@ -45,7 +46,7 @@ func (s *AuthService) GoogleOauth2(code string) (user *userModel.User, err error
 		"code":          code,
 		"client_id":     os.Getenv("GOOGLE_CLIENT_ID"),
 		"client_secret": os.Getenv("GOOGLE_CLIENT_SECRET"),
-		"redirect_uri":  os.Getenv("GOOGLE_CLIENT_ID"),
+		"redirect_uri":  os.Getenv("GOOGLE_REDIRECT_URI"),
 		"grant_type":    "authorization_code",
 	}
 
@@ -110,17 +111,25 @@ func (s *AuthService) GoogleOauth2(code string) (user *userModel.User, err error
 	// FIND USER IF EXISTS
 	user, err = s.userRepo.FindByID(userId)
 
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		// REGISTER USER IF DOES NOT EXIST
+		err := s.userRepo.CreateUUID(userId)
+		if err != nil {
+			if !strings.Contains(err.Error(), "Error 1062: Duplicate entry") { // UUID is in goa_player but not in goa_player_web so lets skip to CreateWebData
+				s.logger.Error(err.Error())
+				return nil, err
+			}
+		}
+
 		name := userInfoResponseJson["name"].(string)
+		email := userInfoResponseJson["email"].(string)
 
 		userModel := userModel.CreateUser{
-			Email:      "test@test.com",
+			Email:      email,
 			McUsername: name,
 			Credits:    0,
 		}
-
-		user, err = s.userRepo.Create(userId, userModel)
+		user, err = s.userRepo.CreateWebData(userId, userModel)
 		if err != nil {
 			s.logger.Error(err.Error())
 			return nil, err

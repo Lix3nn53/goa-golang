@@ -25,7 +25,7 @@ func NewBillingRepository(db *storage.DbStore) BillingRepositoryInterface {
 // CreateBillingService Create implements the method to persist a Payment user
 func (r *billingRepository) CreateBillingService(identify billingModel.Identify, PaymentUserKey string, userID string) error {
 	createUserQuery := `INSERT INTO billing (identify, key, user_id) 
-		VALUES ($1, $2, $3)
+		VALUES (?, ?, ?)
 		RETURNING id`
 
 	stmt, err := r.db.Prepare(createUserQuery)

@@ -54,7 +54,7 @@ func TestBillingRepository_Create(t *testing.T) {
 
 	serviceID := int(1)
 
-	ep := mock.ExpectPrepare("INSERT INTO billing (identify, key, user_id) VALUES ($1, $2, $3) RETURNING id").WillBeClosed()
+	ep := mock.ExpectPrepare("INSERT INTO billing (identify, key, user_id) VALUES (?, ?, ?) RETURNING id").WillBeClosed()
 	ep.ExpectQuery().WithArgs(billingModel.AccountStripe, key, userID).WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(serviceID))
 
 	err = userPGRepository.CreateBillingService(billingModel.AccountStripe, key, userID)

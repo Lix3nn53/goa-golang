@@ -1,7 +1,7 @@
 package authController
 
 import (
-	errorNotFound "goa-golang/app/error"
+	appError "goa-golang/app/error"
 	"goa-golang/app/service/authService"
 	"goa-golang/internal/logger"
 	"net/http"
@@ -35,7 +35,7 @@ func (uc *AuthController) GoogleOauth2(c *gin.Context) {
 	user, err := uc.service.GoogleOauth2(code)
 	if err != nil {
 		uc.logger.Error(err.Error())
-		c.Status(errorNotFound.ParseError(err))
+		appError.Respond(c, http.StatusBadRequest, err)
 		return
 	}
 	c.JSON(http.StatusOK, user)

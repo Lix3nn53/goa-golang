@@ -72,7 +72,7 @@ func TestUserService_Store(t *testing.T) {
 		}
 		var err error
 
-		userR.EXPECT().Create(userID, user).Return(userRes, err)
+		userR.EXPECT().CreateWebData(userID, user).Return(userRes, err)
 
 		response, err := userService.Store(userID, reqValue)
 

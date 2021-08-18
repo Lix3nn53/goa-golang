@@ -41,7 +41,7 @@ func (s *BillingService) GetPaymentAdapter(customer billingModel.CreateCustomer)
 	p, err := billingModel.GetPaymentAdapter(customer.Identify)
 
 	if err != nil {
-		return nil, appError.InvalidPaymentMethod
+		return nil, appError.ErrInvalidPaymentMethod
 	}
 
 	return &billingModel.Payment{

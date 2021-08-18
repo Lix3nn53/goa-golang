@@ -120,7 +120,7 @@ func TestBillingController_Store2(t *testing.T) {
 			},
 		}
 
-		billUC.EXPECT().GetPaymentAdapter(customer).Return(nil, appError.InvalidPaymentMethod)
+		billUC.EXPECT().GetPaymentAdapter(customer).Return(nil, appError.ErrInvalidPaymentMethod)
 
 		router := gin.Default()
 		router.POST("/api/users/:id/paypal", billingController.AddCustomer)

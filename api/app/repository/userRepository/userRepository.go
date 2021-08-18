@@ -16,7 +16,8 @@ type UserRepositoryInterface interface {
 	FindByID(uuid string) (user *userModel.User, err error)
 	RemoveByID(uuid string) error
 	UpdateByID(uuid string, user userModel.UpdateUser) error
-	Create(uuid string, create userModel.CreateUser) (user *userModel.User, err error)
+	CreateUUID(uuid string) (err error)
+	CreateWebData(uuid string, create userModel.CreateUser) (user *userModel.User, err error)
 }
 
 // NewUserRepository implements the user repository interface.
@@ -30,7 +31,7 @@ func NewUserRepository(db *storage.DbStore) UserRepositoryInterface {
 func (r *UserRepository) FindByID(uuid string) (user *userModel.User, err error) {
 	user = &userModel.User{}
 
-	var query = "SELECT uuid, email, mc_username, credits FROM goa_player_web WHERE id = $1"
+	var query = "SELECT uuid, email, mc_username, credits FROM goa_player_web WHERE uuid = ?"
 	row := r.db.QueryRow(query, uuid)
 
 	if err := row.Scan(&user.UUID, &user.Email, &user.McUsername, &user.Credits); err != nil {
@@ -43,13 +44,13 @@ func (r *UserRepository) FindByID(uuid string) (user *userModel.User, err error)
 // RemoveByID implements the method to remove a user from the store
 func (r *UserRepository) RemoveByID(uuid string) error {
 
-	_, err := r.db.Exec(`DELETE FROM goa_player_web WHERE id = $1;`, uuid)
+	_, err := r.db.Exec(`DELETE FROM goa_player_web WHERE uuid = ?;`, uuid)
 	return err
 }
 
 // UpdateByID implements the method to update a user into the store
 func (r *UserRepository) UpdateByID(uuid string, user userModel.UpdateUser) error {
-	result, err := r.db.Exec("UPDATE goa_player_web SET email = $1, mc_username = $2, credits = $3 where id = $4", user.Email, user.McUsername, user.Credits, uuid)
+	result, err := r.db.Exec("UPDATE goa_player_web SET email = ?, mc_username = ?, credits = ? where uuid = ?", user.Email, user.McUsername, user.Credits, uuid)
 	if err != nil {
 		return err
 	}
@@ -67,9 +68,37 @@ func (r *UserRepository) UpdateByID(uuid string, user userModel.UpdateUser) erro
 }
 
 // Create implements the method to persist a new user
-func (r *UserRepository) Create(uuid string, UserSignUp userModel.CreateUser) (user *userModel.User, err error) {
+func (r *UserRepository) CreateUUID(uuid string) (err error) {
+	createUserQuery := `INSERT INTO goa_player (uuid) 
+		VALUES (?)`
+
+	stmt, err := r.db.Prepare(createUserQuery)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	result, err := stmt.Exec(uuid)
+	if err != nil {
+		return err
+	}
+
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	n := int(rows) // truncated on machines with 32-bit ints
+	if n == 0 {
+		return appError.ErrNotFound
+	}
+
+	return nil
+}
+
+// Create implements the method to persist a new user
+func (r *UserRepository) CreateWebData(uuid string, UserSignUp userModel.CreateUser) (user *userModel.User, err error) {
 	createUserQuery := `INSERT INTO goa_player_web (uuid, email, mc_username, credits) 
-		VALUES ($1, $2, $3, $4)`
+		VALUES (?, ?, ?, ?)`
 
 	stmt, err := r.db.Prepare(createUserQuery)
 	if err != nil {
@@ -77,10 +106,18 @@ func (r *UserRepository) Create(uuid string, UserSignUp userModel.CreateUser) (u
 	}
 	defer stmt.Close()
 
-	var userUUID string
-	err = stmt.QueryRow(uuid, UserSignUp.Email, UserSignUp.McUsername, UserSignUp.Credits).Scan(&userUUID)
+	result, err := stmt.Exec(uuid, UserSignUp.Email, UserSignUp.McUsername, UserSignUp.Credits)
 	if err != nil {
 		return nil, err
+	}
+
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return nil, err
+	}
+	n := int(rows) // truncated on machines with 32-bit ints
+	if n == 0 {
+		return nil, appError.ErrNotFound
 	}
 
 	return &userModel.User{

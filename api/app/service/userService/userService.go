@@ -42,5 +42,5 @@ func (s *UserService) UpdateByID(uuid string, user userModel.UpdateUser) error {
 
 // FindByID implements the method to store a new a user model
 func (s *UserService) Store(uuid string, user userModel.CreateUser) (*userModel.User, error) {
-	return s.userRepo.Create(uuid, user)
+	return s.userRepo.CreateWebData(uuid, user)
 }

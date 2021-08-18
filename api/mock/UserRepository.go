@@ -34,19 +34,34 @@ func (m *MockUserRepositoryInterface) EXPECT() *MockUserRepositoryInterfaceMockR
 	return m.recorder
 }
 
-// Create mocks base method.
-func (m *MockUserRepositoryInterface) Create(uuid string, create userModel.CreateUser) (*userModel.User, error) {
+// CreateUUID mocks base method.
+func (m *MockUserRepositoryInterface) CreateUUID(uuid string) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Create", uuid, create)
+	ret := m.ctrl.Call(m, "CreateUUID", uuid)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateUUID indicates an expected call of CreateUUID.
+func (mr *MockUserRepositoryInterfaceMockRecorder) CreateUUID(uuid interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateUUID", reflect.TypeOf((*MockUserRepositoryInterface)(nil).CreateUUID), uuid)
+}
+
+// CreateWebData mocks base method.
+func (m *MockUserRepositoryInterface) CreateWebData(uuid string, create userModel.CreateUser) (*userModel.User, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateWebData", uuid, create)
 	ret0, _ := ret[0].(*userModel.User)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// Create indicates an expected call of Create.
-func (mr *MockUserRepositoryInterfaceMockRecorder) Create(uuid, create interface{}) *gomock.Call {
+// CreateWebData indicates an expected call of CreateWebData.
+func (mr *MockUserRepositoryInterfaceMockRecorder) CreateWebData(uuid, create interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockUserRepositoryInterface)(nil).Create), uuid, create)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateWebData", reflect.TypeOf((*MockUserRepositoryInterface)(nil).CreateWebData), uuid, create)
 }
 
 // FindByID mocks base method.

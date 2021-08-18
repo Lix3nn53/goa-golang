@@ -1,7 +1,7 @@
 package userController
 
 import (
-	errorNotFound "goa-golang/app/error"
+	appError "goa-golang/app/error"
 	"goa-golang/app/model/userModel"
 	"goa-golang/app/service/userService"
 	"goa-golang/internal/logger"
@@ -41,7 +41,7 @@ func (uc *UserController) Find(c *gin.Context) {
 	user, err := uc.service.FindByID(uuid)
 	if err != nil {
 		uc.logger.Error(err.Error())
-		c.Status(errorNotFound.ParseError(err))
+		appError.Respond(c, http.StatusNotFound, err)
 		return
 	}
 	c.JSON(http.StatusOK, user)
@@ -55,7 +55,7 @@ func (uc *UserController) Destroy(c *gin.Context) {
 
 	if err != nil {
 		uc.logger.Error(err.Error())
-		c.Status(errorNotFound.ParseError(err))
+		appError.Respond(c, http.StatusNotFound, err)
 		return
 	}
 
@@ -84,7 +84,7 @@ func (uc *UserController) Update(c *gin.Context) {
 
 	if err != nil {
 		uc.logger.Error(err.Error())
-		c.Status(errorNotFound.ParseError(err))
+		appError.Respond(c, http.StatusNotFound, err)
 		return
 	}
 
@@ -112,7 +112,7 @@ func (uc *UserController) Store(c *gin.Context) {
 
 	if err != nil {
 		uc.logger.Error(err.Error())
-		c.Status(errorNotFound.ParseError(err))
+		appError.Respond(c, http.StatusNotFound, err)
 		return
 	}
 

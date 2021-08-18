@@ -94,5 +94,5 @@ func GetPaymentAdapter(identify Identify) (PaymentInterface, error) {
 		}
 		return &stripeAdapter, nil
 	}
-	return nil, appError.InvalidPaymentMethod
+	return nil, appError.ErrInvalidPaymentMethod
 }
