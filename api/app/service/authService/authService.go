@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"os"
 	"time"
@@ -44,7 +45,7 @@ func (s *AuthService) GoogleOauth2(code string) (user *userModel.User, err error
 		"code":          code,
 		"client_id":     os.Getenv("GOOGLE_CLIENT_ID"),
 		"client_secret": os.Getenv("GOOGLE_CLIENT_SECRET"),
-		"redirect_uri":  "http://localhost:3000/auth/callback",
+		"redirect_uri":  os.Getenv("GOOGLE_CLIENT_ID"),
 		"grant_type":    "authorization_code",
 	}
 
@@ -69,6 +70,17 @@ func (s *AuthService) GoogleOauth2(code string) (user *userModel.User, err error
 	if err != nil {
 		return nil, err
 	}
+	// print response
+	j, err := json.MarshalIndent(accessTokenResponseJson, "", "\t")
+	if err != nil {
+		return nil, err
+	}
+	s.logger.Infof(string(j))
+	// check for error field in json
+	if accessTokenResponseJson["error"] != nil {
+		err = errors.New(accessTokenResponseJson["error"].(string))
+		return nil, err
+	}
 	accessToken := accessTokenResponseJson["access_token"].(string)
 
 	// User info request
@@ -89,7 +101,7 @@ func (s *AuthService) GoogleOauth2(code string) (user *userModel.User, err error
 	}
 	userId := userInfoResponseJson["id"].(string)
 
-	j, err := json.MarshalIndent(userInfoResponseJson, "", "\t")
+	j, err = json.MarshalIndent(userInfoResponseJson, "", "\t")
 	if err != nil {
 		return nil, err
 	}
