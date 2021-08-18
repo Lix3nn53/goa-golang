@@ -6,8 +6,10 @@ package dic
 
 import (
 	"goa-golang/app/controller/authController"
+	"goa-golang/app/controller/userController"
 	"goa-golang/app/repository/userRepository"
 	"goa-golang/app/service/authService"
+	"goa-golang/app/service/userService"
 	"goa-golang/internal/logger"
 	"goa-golang/internal/storage"
 )
@@ -17,6 +19,16 @@ import (
 func InitUserRepository(db *storage.DbStore) userRepository.UserRepositoryInterface {
 	userRepositoryInterface := userRepository.NewUserRepository(db)
 	return userRepositoryInterface
+}
+
+func InitUserService(userRepo userRepository.UserRepositoryInterface) userService.UserServiceInterface {
+	userServiceInterface := userService.NewUserService(userRepo)
+	return userServiceInterface
+}
+
+func InitUserController(us userService.UserServiceInterface, logger2 logger.Logger) userController.UserControllerInterface {
+	userControllerInterface := userController.NewUserController(us, logger2)
+	return userControllerInterface
 }
 
 func InitAuthService(userRepo userRepository.UserRepositoryInterface, logger2 logger.Logger) authService.AuthServiceInterface {

@@ -7,14 +7,7 @@ import (
 )
 
 func SetupUserRoute(users *gin.RouterGroup, uc userController.UserControllerInterface) *gin.RouterGroup {
-	users.POST("", uc.Store)
-
-	user := users.Group(":id")
-	{
-		user.GET("", uc.Find)
-		user.DELETE("", uc.Destroy)
-		user.PUT("", uc.Update)
-	}
+	users.GET("/info", uc.Info)
 
 	return users
 }

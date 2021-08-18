@@ -44,7 +44,7 @@ func TestMicroservice_Find(t *testing.T) {
 		userUC.EXPECT().FindByID(1).Return(userRes, nil)
 
 		router := gin.Default()
-		router.GET("/api/users/:id", userController.Find)
+		router.GET("/api/users/:id", userController.Info)
 		ts := httptest.NewServer(router)
 		defer ts.Close()
 		w := httptest.NewRecorder()
@@ -59,7 +59,7 @@ func TestMicroservice_Find(t *testing.T) {
 		userUC.EXPECT().FindByID(2).Return(nil, appError.ErrNotFound)
 
 		router := gin.Default()
-		router.GET("/api/users/:id", userController.Find)
+		router.GET("/api/users/:id", userController.Info)
 		ts := httptest.NewServer(router)
 		defer ts.Close()
 		w := httptest.NewRecorder()
@@ -72,7 +72,7 @@ func TestMicroservice_Find(t *testing.T) {
 	t.Run("Incorrect_2", func(t *testing.T) {
 
 		router := gin.Default()
-		router.GET("/api/users/:id", userController.Find)
+		router.GET("/api/users/:id", userController.Info)
 		ts := httptest.NewServer(router)
 		defer ts.Close()
 		w := httptest.NewRecorder()

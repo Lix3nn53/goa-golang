@@ -1,10 +1,12 @@
 package authController
 
 import (
+	"errors"
 	appError "goa-golang/app/error"
 	"goa-golang/app/service/authService"
 	"goa-golang/internal/logger"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -12,6 +14,7 @@ import (
 //UserControllerInterface define the user controller interface methods
 type AuthControllerInterface interface {
 	GoogleOauth2(c *gin.Context)
+	AuthMiddleware() gin.HandlerFunc
 }
 
 // UserController handles communication with the user service
@@ -28,15 +31,51 @@ func NewAuthController(service authService.AuthServiceInterface, logger logger.L
 	}
 }
 
+type AuthResponse struct {
+	AccessToken string `json:"access_token"`
+}
+
 // Find implements the method to handle the service to find a user by the primary key
 func (uc *AuthController) GoogleOauth2(c *gin.Context) {
 	code := c.Query("code")
 
-	user, err := uc.service.GoogleOauth2(code)
+	tokenString, err := uc.service.GoogleOauth2(code)
 	if err != nil {
 		uc.logger.Error(err.Error())
 		appError.Respond(c, http.StatusBadRequest, err)
 		return
 	}
-	c.JSON(http.StatusOK, user)
+
+	response := AuthResponse{AccessToken: tokenString}
+	c.JSON(http.StatusOK, response)
+}
+
+func (uc *AuthController) AuthMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		auth := c.Request.Header.Get("Authorization")
+
+		if auth == "" {
+			appError.Respond(c, http.StatusForbidden, errors.New("no authorization header provided"))
+			c.Abort()
+			return
+		}
+
+		token := strings.TrimPrefix(auth, "Bearer ")
+		if token == auth {
+			appError.Respond(c, http.StatusForbidden, errors.New("could not find bearer token in authorization header"))
+			c.Abort()
+			return
+		}
+
+		userUUID, err := uc.service.TokenValidate(token)
+		if err != nil {
+			appError.Respond(c, http.StatusForbidden, err)
+			c.Abort()
+			return
+		}
+
+		c.Set("userUUID", userUUID)
+		c.Next()
+		// after request
+	}
 }
