@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"os"
 	"strings"
@@ -13,10 +14,14 @@ import (
 	"goa-golang/app/model/userModel"
 	"goa-golang/app/repository/userRepository"
 	"goa-golang/internal/logger"
+
+	"github.com/golang-jwt/jwt"
 )
 
 //UserServiceInterface define the user service interface methods
 type AuthServiceInterface interface {
+	TokenBuild(uuid string) (tokenString string, err error)
+	TokenValidate(tokenString string) (userUUID string, err error)
 	GoogleOauth2(code string) (user *userModel.User, err error)
 }
 
@@ -31,6 +36,51 @@ func NewAuthService(userRepo userRepository.UserRepositoryInterface, logger logg
 	return &AuthService{
 		userRepo,
 		logger,
+	}
+}
+
+// FindByID implements the method to find a user model by primary key
+func (s *AuthService) TokenBuild(uuid string) (tokenString string, err error) {
+	// Create a new token object, specifying signing method and the claims
+	// you would like it to contain.
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.StandardClaims{
+		Issuer:    uuid,
+		ExpiresAt: time.Date(2015, 10, 10, 12, 0, 0, 0, time.UTC).Unix(),
+	})
+
+	// Sign and get the complete encoded token as a string using the secret
+	hmacSampleSecret := []byte(os.Getenv("JWT_SECRET"))
+	tokenString, err = token.SignedString(hmacSampleSecret)
+	if err != nil {
+		return "", err
+	}
+
+	return tokenString, nil
+}
+
+// FindByID implements the method to find a user model by primary key
+func (s *AuthService) TokenValidate(tokenString string) (userUUID string, err error) {
+	// Parse takes the token string and a function for looking up the key. The latter is especially
+	// useful if you use multiple keys for your application.  The standard is to use 'kid' in the
+	// head of the token to identify which key to use, but the parsed token (head and claims) is provided
+	// to the callback, providing flexibility.
+	token, err := jwt.ParseWithClaims(tokenString, &jwt.StandardClaims{}, func(token *jwt.Token) (interface{}, error) {
+		// Don't forget to validate the alg is what you expect:
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+
+		// hmacSampleSecret is a []byte containing your secret, e.g. []byte("my_secret_key")
+		hmacSampleSecret := []byte(os.Getenv("JWT_SECRET"))
+		return hmacSampleSecret, nil
+	})
+
+	if claims, ok := token.Claims.(*jwt.StandardClaims); ok && token.Valid {
+		fmt.Println("TOKEN DEBUG", claims.Issuer, claims.ExpiresAt)
+
+		return claims.Issuer, nil
+	} else {
+		return "", err
 	}
 }
 

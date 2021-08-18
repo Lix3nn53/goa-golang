@@ -35,12 +35,11 @@ func (m *MockUserRepositoryInterface) EXPECT() *MockUserRepositoryInterfaceMockR
 }
 
 // CreateUUID mocks base method.
-func (m *MockUserRepositoryInterface) CreateUUID(uuid string) (string, error) {
+func (m *MockUserRepositoryInterface) CreateUUID(uuid string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateUUID", uuid)
-	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
 // CreateUUID indicates an expected call of CreateUUID.
