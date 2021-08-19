@@ -20,9 +20,11 @@ import (
 
 //UserServiceInterface define the user service interface methods
 type AuthServiceInterface interface {
-	tokenBuild(uuid string) (tokenString string, err error)
+	TokenBuildAccess(uuid string) (tokenString string, err error)
+	tokenBuildRefresh(uuid string) (tokenString string, err error)
 	TokenValidate(tokenString string) (userUUID string, err error)
-	GoogleOauth2(code string) (tokenString string, err error)
+	TokenValidateRefresh(tokenString string) (userUUID string, err error)
+	GoogleOauth2(code string) (refreshToken string, accessToken string, err error)
 }
 
 // billingService handles communication with the user repository
@@ -40,7 +42,7 @@ func NewAuthService(userRepo userRepository.UserRepositoryInterface, logger logg
 }
 
 // FindByID implements the method to find a user model by primary key
-func (s *AuthService) tokenBuild(uuid string) (tokenString string, err error) {
+func (s *AuthService) TokenBuildAccess(uuid string) (tokenString string, err error) {
 	// Create a new token object, specifying signing method and the claims
 	// you would like it to contain.
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.StandardClaims{
@@ -51,6 +53,30 @@ func (s *AuthService) tokenBuild(uuid string) (tokenString string, err error) {
 	// Sign and get the complete encoded token as a string using the secret
 	hmacSampleSecret := []byte(os.Getenv("JWT_SECRET"))
 	tokenString, err = token.SignedString(hmacSampleSecret)
+	if err != nil {
+		return "", err
+	}
+
+	return tokenString, nil
+}
+
+// FindByID implements the method to find a user model by primary key
+func (s *AuthService) tokenBuildRefresh(uuid string) (tokenString string, err error) {
+	// Create a new token object, specifying signing method and the claims
+	// you would like it to contain.
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.StandardClaims{
+		Issuer:    uuid,
+		ExpiresAt: time.Date(2015, 10, 10, 12, 0, 0, 0, time.UTC).Unix(),
+	})
+
+	// Sign and get the complete encoded token as a string using the secret
+	hmacSampleSecret := []byte(os.Getenv("JWT_SECRET"))
+	tokenString, err = token.SignedString(hmacSampleSecret)
+	if err != nil {
+		return "", err
+	}
+
+	err = s.userRepo.AddSession(uuid, tokenString)
 	if err != nil {
 		return "", err
 	}
@@ -85,7 +111,36 @@ func (s *AuthService) TokenValidate(tokenString string) (userUUID string, err er
 }
 
 // FindByID implements the method to find a user model by primary key
-func (s *AuthService) GoogleOauth2(code string) (tokenString string, err error) {
+func (s *AuthService) TokenValidateRefresh(tokenString string) (userUUID string, err error) {
+	userUUID, err = s.TokenValidate(tokenString)
+	if err != nil {
+		return "", err
+	}
+
+	sessions, err := s.userRepo.GetSessions(userUUID)
+	if err != nil {
+		return "", err
+	}
+
+	split := strings.Split(sessions, "/")
+
+	contains := false
+	for _, value := range split {
+		if value == tokenString {
+			contains = true
+			break
+		}
+	}
+
+	if !contains {
+		return "", errors.New("session is not active")
+	}
+
+	return userUUID, nil
+}
+
+// FindByID implements the method to find a user model by primary key
+func (s *AuthService) GoogleOauth2(code string) (refreshToken string, accessToken string, err error) {
 	tokenUrl := "https://oauth2.googleapis.com/token"
 	userProfileUrl := "https://www.googleapis.com/oauth2/v2/userinfo"
 
@@ -102,7 +157,7 @@ func (s *AuthService) GoogleOauth2(code string) (tokenString string, err error) 
 
 	json_data, err := json.Marshal(data)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	accessTokenRequest, _ := http.NewRequest(http.MethodPost, tokenUrl, bytes.NewReader(json_data))
@@ -112,49 +167,49 @@ func (s *AuthService) GoogleOauth2(code string) (tokenString string, err error) 
 	// Access token response
 	accessTokenResponse, err := client.Do((accessTokenRequest))
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 	defer accessTokenResponse.Body.Close()
 
 	var accessTokenResponseJson map[string]interface{}
 	err = json.NewDecoder(accessTokenResponse.Body).Decode(&accessTokenResponseJson)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 	// print response
 	j, err := json.MarshalIndent(accessTokenResponseJson, "", "\t")
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 	s.logger.Infof(string(j))
 	// check for error field in json
 	if accessTokenResponseJson["error"] != nil {
 		err = errors.New(accessTokenResponseJson["error"].(string))
-		return "", err
+		return "", "", err
 	}
-	accessToken := accessTokenResponseJson["access_token"].(string)
+	accessTokenGoogle := accessTokenResponseJson["access_token"].(string)
 
 	// User info request
 	userInfoRequest, _ := http.NewRequest(http.MethodGet, userProfileUrl, nil)
-	userInfoRequest.Header.Set("Authorization", "Bearer "+accessToken)
+	userInfoRequest.Header.Set("Authorization", "Bearer "+accessTokenGoogle)
 
 	// Access token response
 	userInfoResponse, err := client.Do((userInfoRequest))
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 	defer userInfoResponse.Body.Close()
 
 	var userInfoResponseJson map[string]interface{}
 	err = json.NewDecoder(userInfoResponse.Body).Decode(&userInfoResponseJson)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 	userId := userInfoResponseJson["id"].(string)
 
 	j, err = json.MarshalIndent(userInfoResponseJson, "", "\t")
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 	s.logger.Infof(string(j))
 
@@ -167,7 +222,7 @@ func (s *AuthService) GoogleOauth2(code string) (tokenString string, err error) 
 		if err != nil {
 			if !strings.Contains(err.Error(), "Error 1062: Duplicate entry") { // UUID is in goa_player but not in goa_player_web so lets skip to CreateWebData
 				s.logger.Error(err.Error())
-				return "", err
+				return "", "", err
 			}
 		}
 
@@ -182,18 +237,24 @@ func (s *AuthService) GoogleOauth2(code string) (tokenString string, err error) 
 		user, err = s.userRepo.CreateWebData(userId, userModel)
 		if err != nil {
 			s.logger.Error(err.Error())
-			return "", err
+			return "", "", err
 		}
 	} else if err != nil {
 		s.logger.Error(err.Error())
-		return "", err
+		return "", "", err
 	}
 
-	tokenString, err = s.tokenBuild(user.UUID)
+	refreshToken, err = s.tokenBuildRefresh(user.UUID)
 	if err != nil {
 		s.logger.Error(err.Error())
-		return "", err
+		return "", "", err
 	}
 
-	return tokenString, nil
+	accessToken, err = s.TokenBuildAccess(user.UUID)
+	if err != nil {
+		s.logger.Error(err.Error())
+		return "", "", err
+	}
+
+	return refreshToken, accessToken, nil
 }

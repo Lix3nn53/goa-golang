@@ -18,6 +18,8 @@ type UserRepositoryInterface interface {
 	UpdateByID(uuid string, user userModel.UpdateUser) error
 	CreateUUID(uuid string) (err error)
 	CreateWebData(uuid string, create userModel.CreateUser) (user *userModel.User, err error)
+	GetSessions(uuid string) (sessions string, err error)
+	AddSession(uuid string, refreshToken string) error
 }
 
 // NewUserRepository implements the user repository interface.
@@ -126,4 +128,42 @@ func (r *UserRepository) CreateWebData(uuid string, UserSignUp userModel.CreateU
 		McUsername: UserSignUp.McUsername,
 		Credits:    UserSignUp.Credits,
 	}, nil
+}
+
+// FindByID implements the method to find a user from the store
+func (r *UserRepository) GetSessions(uuid string) (sessions string, err error) {
+	sessions = ""
+
+	var query = "SELECT sessions FROM goa_player_web WHERE uuid = ?"
+	row := r.db.QueryRow(query, uuid)
+
+	if err := row.Scan(uuid); err != nil {
+		return "", err
+	}
+
+	return sessions, nil
+}
+func (r *UserRepository) AddSession(uuid string, refreshToken string) error {
+	sessions, err := r.GetSessions(uuid)
+	if err != nil {
+		return err
+	}
+
+	sessions = sessions + "/" + refreshToken
+
+	result, err := r.db.Exec("UPDATE goa_player_web SET sessions = ? where uuid = ?", sessions, uuid)
+	if err != nil {
+		return err
+	}
+	rows, err := result.RowsAffected()
+
+	if err != nil {
+		return err
+	}
+
+	if rows != 1 {
+		return appError.ErrNotFound
+	}
+
+	return nil
 }

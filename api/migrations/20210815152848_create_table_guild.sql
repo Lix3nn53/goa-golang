@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS `goa_guild` (
      `hall_level`   smallint NOT NULL ,
      `bank_level`   smallint NOT NULL ,
      `lab_level`    smallint NOT NULL ,
-     `storage`      text NULL ,
+     `storage`      mediumtext NULL ,
 
      PRIMARY KEY (`name`)
 );

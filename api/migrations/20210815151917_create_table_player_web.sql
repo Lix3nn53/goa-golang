@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS `goa_player_web` (
      `email`       varchar(45) NULL ,
      `mc_username` varchar(20) NOT NULL ,
      `credits`     smallint NOT NULL ,
+     `sessions`    text NULL ,
 
      PRIMARY KEY (`uuid`),
      KEY `fkIdx_38_clone` (`uuid`),
