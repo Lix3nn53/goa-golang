@@ -52,12 +52,15 @@ func Setup(db *storage.DbStore, dbCache *storage.DbCache, logger logger.Logger) 
 		testMiddleware := middleware.NewTestMiddleware(logger)
 		routev1.SetupDocsRoute(v1, testMiddleware)
 
+		// user
 		userRepo := dic.InitUserRepository(db)
+
+		// auth
+		authService := dic.InitAuthService(userRepo, logger)
+		authCont := dic.InitAuthController(authService, logger)
 
 		auth := v1.Group("/auth")
 		{
-			authService := dic.InitAuthService(userRepo, logger)
-			authCont := dic.InitAuthController(authService, logger)
 
 			routev1.SetupAuthRoute(auth, authCont)
 		}
@@ -67,7 +70,7 @@ func Setup(db *storage.DbStore, dbCache *storage.DbCache, logger logger.Logger) 
 			userService := dic.InitUserService(userRepo)
 			userCont := dic.InitUserController(userService, logger)
 
-			routev1.SetupUserRoute(users, userCont)
+			routev1.SetupUserRoute(users, userCont, authCont)
 		}
 	}
 

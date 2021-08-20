@@ -1,6 +1,8 @@
 package userRepository
 
 import (
+	"database/sql"
+	"errors"
 	appError "goa-golang/app/error"
 	"goa-golang/app/model/userModel"
 	"goa-golang/internal/storage"
@@ -134,16 +136,18 @@ func (r *UserRepository) CreateWebData(uuid string, UserSignUp userModel.CreateU
 
 // FindByID implements the method to find a user from the store
 func (r *UserRepository) GetSessions(uuid string) (sessions string, err error) {
-	sessions = ""
-
 	var query = "SELECT sessions FROM goa_player_web WHERE uuid = ?"
 	row := r.db.QueryRow(query, uuid)
 
-	if err := row.Scan(uuid); err != nil {
+	var sessionsScan sql.NullString
+	if err := row.Scan(&sessionsScan); err != nil {
 		return "", err
 	}
+	if !sessionsScan.Valid {
+		return "", errors.New("sql string is not valid")
+	}
 
-	return sessions, nil
+	return sessionsScan.String, nil
 }
 
 func (r *UserRepository) AddSession(uuid string, refreshToken string) error {

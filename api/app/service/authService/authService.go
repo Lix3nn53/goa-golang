@@ -22,7 +22,7 @@ import (
 type AuthServiceInterface interface {
 	TokenBuildAccess(uuid string) (tokenString string, err error)
 	tokenBuildRefresh(uuid string) (tokenString string, err error)
-	TokenValidate(tokenString string) (userUUID string, err error)
+	TokenValidate(tokenString string, secret string) (userUUID string, err error)
 	TokenValidateRefresh(tokenString string) (userUUID string, err error)
 	Logout(uuid string, refreshToken string) error
 	GoogleOauth2(code string) (refreshToken string, accessToken string, err error)
@@ -48,11 +48,11 @@ func (s *AuthService) TokenBuildAccess(uuid string) (tokenString string, err err
 	// you would like it to contain.
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.StandardClaims{
 		Issuer:    uuid,
-		ExpiresAt: time.Date(2015, 10, 10, 12, 0, 0, 0, time.UTC).Unix(),
+		ExpiresAt: time.Now().Add(time.Duration(1) * time.Minute).Unix(),
 	})
 
 	// Sign and get the complete encoded token as a string using the secret
-	hmacSampleSecret := []byte(os.Getenv("JWT_SECRET"))
+	hmacSampleSecret := []byte(os.Getenv("ACCESS_SECRET"))
 	tokenString, err = token.SignedString(hmacSampleSecret)
 	if err != nil {
 		return "", err
@@ -67,11 +67,11 @@ func (s *AuthService) tokenBuildRefresh(uuid string) (tokenString string, err er
 	// you would like it to contain.
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.StandardClaims{
 		Issuer:    uuid,
-		ExpiresAt: time.Date(2015, 10, 10, 12, 0, 0, 0, time.UTC).Unix(),
+		ExpiresAt: time.Now().AddDate(0, 1, 0).Unix(),
 	})
 
 	// Sign and get the complete encoded token as a string using the secret
-	hmacSampleSecret := []byte(os.Getenv("JWT_SECRET"))
+	hmacSampleSecret := []byte(os.Getenv("REFRESH_SECRET"))
 	tokenString, err = token.SignedString(hmacSampleSecret)
 	if err != nil {
 		return "", err
@@ -86,7 +86,7 @@ func (s *AuthService) tokenBuildRefresh(uuid string) (tokenString string, err er
 }
 
 // FindByID implements the method to find a user model by primary key
-func (s *AuthService) TokenValidate(tokenString string) (userUUID string, err error) {
+func (s *AuthService) TokenValidate(tokenString string, secret string) (userUUID string, err error) {
 	// Parse takes the token string and a function for looking up the key. The latter is especially
 	// useful if you use multiple keys for your application.  The standard is to use 'kid' in the
 	// head of the token to identify which key to use, but the parsed token (head and claims) is provided
@@ -98,7 +98,7 @@ func (s *AuthService) TokenValidate(tokenString string) (userUUID string, err er
 		}
 
 		// hmacSampleSecret is a []byte containing your secret, e.g. []byte("my_secret_key")
-		hmacSampleSecret := []byte(os.Getenv("JWT_SECRET"))
+		hmacSampleSecret := []byte(secret)
 		return hmacSampleSecret, nil
 	})
 
@@ -113,7 +113,7 @@ func (s *AuthService) TokenValidate(tokenString string) (userUUID string, err er
 
 // FindByID implements the method to find a user model by primary key
 func (s *AuthService) TokenValidateRefresh(tokenString string) (userUUID string, err error) {
-	userUUID, err = s.TokenValidate(tokenString)
+	userUUID, err = s.TokenValidate(tokenString, os.Getenv("REFRESH_SECRET"))
 	if err != nil {
 		return "", err
 	}

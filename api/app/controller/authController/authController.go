@@ -6,6 +6,7 @@ import (
 	"goa-golang/app/service/authService"
 	"goa-golang/internal/logger"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -62,25 +63,25 @@ func (uc *AuthController) RefreshAccessToken(c *gin.Context) {
 	auth := c.Request.Header.Get("Authorization")
 
 	if auth == "" {
-		appError.Respond(c, http.StatusForbidden, errors.New("no authorization header provided"))
+		appError.Respond(c, http.StatusBadRequest, errors.New("no authorization header provided"))
 		return
 	}
 
 	token := strings.TrimPrefix(auth, "Bearer ")
 	if token == auth {
-		appError.Respond(c, http.StatusForbidden, errors.New("could not find bearer token in authorization header"))
+		appError.Respond(c, http.StatusBadRequest, errors.New("could not find bearer token in authorization header"))
 		return
 	}
 
 	userUUID, err := uc.service.TokenValidateRefresh(token)
 	if err != nil {
-		appError.Respond(c, http.StatusForbidden, err)
+		appError.Respond(c, http.StatusBadRequest, err)
 		return
 	}
 
 	accessToken, err := uc.service.TokenBuildAccess(userUUID)
 	if err != nil {
-		appError.Respond(c, http.StatusForbidden, err)
+		appError.Respond(c, http.StatusInternalServerError, err)
 		return
 	}
 
@@ -93,25 +94,25 @@ func (uc *AuthController) Logout(c *gin.Context) {
 	auth := c.Request.Header.Get("Authorization")
 
 	if auth == "" {
-		appError.Respond(c, http.StatusForbidden, errors.New("no authorization header provided"))
+		appError.Respond(c, http.StatusBadRequest, errors.New("no authorization header provided"))
 		return
 	}
 
 	token := strings.TrimPrefix(auth, "Bearer ")
 	if token == auth {
-		appError.Respond(c, http.StatusForbidden, errors.New("could not find bearer token in authorization header"))
+		appError.Respond(c, http.StatusBadRequest, errors.New("could not find bearer token in authorization header"))
 		return
 	}
 
 	userUUID, err := uc.service.TokenValidateRefresh(token)
 	if err != nil {
-		appError.Respond(c, http.StatusForbidden, err)
+		appError.Respond(c, http.StatusUnauthorized, err)
 		return
 	}
 
 	err = uc.service.Logout(userUUID, token)
 	if err != nil {
-		appError.Respond(c, http.StatusForbidden, err)
+		appError.Respond(c, http.StatusInternalServerError, err)
 		return
 	}
 
@@ -123,21 +124,21 @@ func (uc *AuthController) AuthMiddleware() gin.HandlerFunc {
 		auth := c.Request.Header.Get("Authorization")
 
 		if auth == "" {
-			appError.Respond(c, http.StatusForbidden, errors.New("no authorization header provided"))
+			appError.Respond(c, http.StatusBadRequest, errors.New("no authorization header provided"))
 			c.Abort()
 			return
 		}
 
 		token := strings.TrimPrefix(auth, "Bearer ")
 		if token == auth {
-			appError.Respond(c, http.StatusForbidden, errors.New("could not find bearer token in authorization header"))
+			appError.Respond(c, http.StatusBadRequest, errors.New("could not find bearer token in authorization header"))
 			c.Abort()
 			return
 		}
 
-		userUUID, err := uc.service.TokenValidate(token)
+		userUUID, err := uc.service.TokenValidate(token, os.Getenv("ACCESS_SECRET"))
 		if err != nil {
-			appError.Respond(c, http.StatusForbidden, err)
+			appError.Respond(c, http.StatusUnauthorized, err)
 			c.Abort()
 			return
 		}
