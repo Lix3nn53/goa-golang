@@ -15,6 +15,7 @@ import (
 type AuthControllerInterface interface {
 	GoogleOauth2(c *gin.Context)
 	RefreshAccessToken(c *gin.Context)
+	Logout(c *gin.Context)
 	AuthMiddleware() gin.HandlerFunc
 }
 
@@ -85,6 +86,36 @@ func (uc *AuthController) RefreshAccessToken(c *gin.Context) {
 
 	response := RefreshAccessResponse{AccessToken: accessToken}
 	c.JSON(http.StatusOK, response)
+}
+
+// Find implements the method to handle the service to find a user by the primary key
+func (uc *AuthController) Logout(c *gin.Context) {
+	auth := c.Request.Header.Get("Authorization")
+
+	if auth == "" {
+		appError.Respond(c, http.StatusForbidden, errors.New("no authorization header provided"))
+		return
+	}
+
+	token := strings.TrimPrefix(auth, "Bearer ")
+	if token == auth {
+		appError.Respond(c, http.StatusForbidden, errors.New("could not find bearer token in authorization header"))
+		return
+	}
+
+	userUUID, err := uc.service.TokenValidateRefresh(token)
+	if err != nil {
+		appError.Respond(c, http.StatusForbidden, err)
+		return
+	}
+
+	err = uc.service.Logout(userUUID, token)
+	if err != nil {
+		appError.Respond(c, http.StatusForbidden, err)
+		return
+	}
+
+	c.Status(http.StatusOK)
 }
 
 func (uc *AuthController) AuthMiddleware() gin.HandlerFunc {

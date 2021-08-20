@@ -24,6 +24,7 @@ type AuthServiceInterface interface {
 	tokenBuildRefresh(uuid string) (tokenString string, err error)
 	TokenValidate(tokenString string) (userUUID string, err error)
 	TokenValidateRefresh(tokenString string) (userUUID string, err error)
+	Logout(uuid string, refreshToken string) error
 	GoogleOauth2(code string) (refreshToken string, accessToken string, err error)
 }
 
@@ -137,6 +138,16 @@ func (s *AuthService) TokenValidateRefresh(tokenString string) (userUUID string,
 	}
 
 	return userUUID, nil
+}
+
+// FindByID implements the method to find a user model by primary key
+func (s *AuthService) Logout(uuid string, refreshToken string) error {
+	err := s.userRepo.RemoveSession(uuid, refreshToken)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // FindByID implements the method to find a user model by primary key

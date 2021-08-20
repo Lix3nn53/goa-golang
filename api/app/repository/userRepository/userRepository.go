@@ -4,6 +4,7 @@ import (
 	appError "goa-golang/app/error"
 	"goa-golang/app/model/userModel"
 	"goa-golang/internal/storage"
+	"strings"
 )
 
 // billingRepository handles communication with the user store
@@ -20,6 +21,7 @@ type UserRepositoryInterface interface {
 	CreateWebData(uuid string, create userModel.CreateUser) (user *userModel.User, err error)
 	GetSessions(uuid string) (sessions string, err error)
 	AddSession(uuid string, refreshToken string) error
+	RemoveSession(uuid string, refreshToken string) error
 }
 
 // NewUserRepository implements the user repository interface.
@@ -143,6 +145,7 @@ func (r *UserRepository) GetSessions(uuid string) (sessions string, err error) {
 
 	return sessions, nil
 }
+
 func (r *UserRepository) AddSession(uuid string, refreshToken string) error {
 	sessions, err := r.GetSessions(uuid)
 	if err != nil {
@@ -150,6 +153,31 @@ func (r *UserRepository) AddSession(uuid string, refreshToken string) error {
 	}
 
 	sessions = sessions + "/" + refreshToken
+
+	result, err := r.db.Exec("UPDATE goa_player_web SET sessions = ? where uuid = ?", sessions, uuid)
+	if err != nil {
+		return err
+	}
+	rows, err := result.RowsAffected()
+
+	if err != nil {
+		return err
+	}
+
+	if rows != 1 {
+		return appError.ErrNotFound
+	}
+
+	return nil
+}
+
+func (r *UserRepository) RemoveSession(uuid string, refreshToken string) error {
+	sessions, err := r.GetSessions(uuid)
+	if err != nil {
+		return err
+	}
+
+	sessions = strings.Replace(sessions, "/"+refreshToken, "", -1)
 
 	result, err := r.db.Exec("UPDATE goa_player_web SET sessions = ? where uuid = ?", sessions, uuid)
 	if err != nil {
