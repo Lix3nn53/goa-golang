@@ -34,6 +34,20 @@ func (m *MockUserRepositoryInterface) EXPECT() *MockUserRepositoryInterfaceMockR
 	return m.recorder
 }
 
+// AddSession mocks base method.
+func (m *MockUserRepositoryInterface) AddSession(uuid, refreshToken string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddSession", uuid, refreshToken)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AddSession indicates an expected call of AddSession.
+func (mr *MockUserRepositoryInterfaceMockRecorder) AddSession(uuid, refreshToken interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddSession", reflect.TypeOf((*MockUserRepositoryInterface)(nil).AddSession), uuid, refreshToken)
+}
+
 // CreateUUID mocks base method.
 func (m *MockUserRepositoryInterface) CreateUUID(uuid string) error {
 	m.ctrl.T.Helper()
@@ -78,6 +92,21 @@ func (mr *MockUserRepositoryInterfaceMockRecorder) FindByID(uuid interface{}) *g
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindByID", reflect.TypeOf((*MockUserRepositoryInterface)(nil).FindByID), uuid)
 }
 
+// GetSessions mocks base method.
+func (m *MockUserRepositoryInterface) GetSessions(uuid string) (string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetSessions", uuid)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetSessions indicates an expected call of GetSessions.
+func (mr *MockUserRepositoryInterfaceMockRecorder) GetSessions(uuid interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSessions", reflect.TypeOf((*MockUserRepositoryInterface)(nil).GetSessions), uuid)
+}
+
 // RemoveByID mocks base method.
 func (m *MockUserRepositoryInterface) RemoveByID(uuid string) error {
 	m.ctrl.T.Helper()
@@ -90,6 +119,20 @@ func (m *MockUserRepositoryInterface) RemoveByID(uuid string) error {
 func (mr *MockUserRepositoryInterfaceMockRecorder) RemoveByID(uuid interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveByID", reflect.TypeOf((*MockUserRepositoryInterface)(nil).RemoveByID), uuid)
+}
+
+// RemoveSession mocks base method.
+func (m *MockUserRepositoryInterface) RemoveSession(uuid, refreshToken string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RemoveSession", uuid, refreshToken)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// RemoveSession indicates an expected call of RemoveSession.
+func (mr *MockUserRepositoryInterfaceMockRecorder) RemoveSession(uuid, refreshToken interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveSession", reflect.TypeOf((*MockUserRepositoryInterface)(nil).RemoveSession), uuid, refreshToken)
 }
 
 // UpdateByID mocks base method.

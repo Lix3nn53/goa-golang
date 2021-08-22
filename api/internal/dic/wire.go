@@ -10,9 +10,12 @@ package dic
 
 import (
 	"goa-golang/app/controller/authController"
+	"goa-golang/app/controller/playerController"
 	"goa-golang/app/controller/userController"
+	"goa-golang/app/repository/playerRepository"
 	"goa-golang/app/repository/userRepository"
 	"goa-golang/app/service/authService"
+	"goa-golang/app/service/playerService"
 	"goa-golang/app/service/userService"
 	"goa-golang/internal/logger"
 	"goa-golang/internal/storage"
@@ -20,6 +23,7 @@ import (
 	"github.com/google/wire"
 )
 
+// User
 func initUserRepository(db *storage.DbStore) userRepository.UserRepositoryInterface {
 	wire.Build(userRepository.NewUserRepository)
 
@@ -38,7 +42,27 @@ func initUserController(us userService.UserServiceInterface, logger logger.Logge
 	return &userController.UserController{}
 }
 
-func initAuthService(userRepo userRepository.UserRepositoryInterface, logger logger.Logger) authService.AuthServiceInterface {
+// Player
+func initPlayerRepository(db *storage.DbStore) playerRepository.PlayerRepositoryInterface {
+	wire.Build(playerRepository.NewPlayerRepository)
+
+	return &playerRepository.PlayerRepository{}
+}
+
+func initPlayerService(playerRepo playerRepository.PlayerRepositoryInterface) playerService.PlayerServiceInterface {
+	wire.Build(playerService.NewPlayerService)
+
+	return &playerService.PlayerService{}
+}
+
+func initPlayerController(ps playerService.PlayerServiceInterface, logger logger.Logger) playerController.PlayerControllerInterface {
+	wire.Build(playerController.NewPlayerController)
+
+	return &playerController.PlayerController{}
+}
+
+// Auth
+func initAuthService(playerRepo playerRepository.PlayerRepositoryInterface, userRepo userRepository.UserRepositoryInterface, logger logger.Logger) authService.AuthServiceInterface {
 	wire.Build(authService.NewAuthService)
 
 	return &authService.AuthService{}

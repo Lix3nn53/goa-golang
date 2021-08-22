@@ -55,8 +55,11 @@ func Setup(db *storage.DbStore, dbCache *storage.DbCache, logger logger.Logger) 
 		// user
 		userRepo := dic.InitUserRepository(db)
 
+		// player
+		playerRepo := dic.InitPlayerRepository(db)
+
 		// auth
-		authService := dic.InitAuthService(userRepo, logger)
+		authService := dic.InitAuthService(playerRepo, userRepo, logger)
 		authCont := dic.InitAuthController(authService, logger)
 
 		auth := v1.Group("/auth")
@@ -71,6 +74,14 @@ func Setup(db *storage.DbStore, dbCache *storage.DbCache, logger logger.Logger) 
 			userCont := dic.InitUserController(userService, logger)
 
 			routev1.SetupUserRoute(users, userCont, authCont)
+		}
+
+		players := v1.Group("/players")
+		{
+			playerService := dic.InitPlayerService(playerRepo)
+			playerCont := dic.InitPlayerController(playerService, logger)
+
+			routev1.SetupPlayerRoute(players, playerCont, authCont)
 		}
 	}
 

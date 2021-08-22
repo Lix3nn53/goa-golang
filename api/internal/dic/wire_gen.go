@@ -6,9 +6,12 @@ package dic
 
 import (
 	"goa-golang/app/controller/authController"
+	"goa-golang/app/controller/playerController"
 	"goa-golang/app/controller/userController"
+	"goa-golang/app/repository/playerRepository"
 	"goa-golang/app/repository/userRepository"
 	"goa-golang/app/service/authService"
+	"goa-golang/app/service/playerService"
 	"goa-golang/app/service/userService"
 	"goa-golang/internal/logger"
 	"goa-golang/internal/storage"
@@ -16,6 +19,7 @@ import (
 
 // Injectors from wire.go:
 
+// User
 func InitUserRepository(db *storage.DbStore) userRepository.UserRepositoryInterface {
 	userRepositoryInterface := userRepository.NewUserRepository(db)
 	return userRepositoryInterface
@@ -31,8 +35,25 @@ func InitUserController(us userService.UserServiceInterface, logger2 logger.Logg
 	return userControllerInterface
 }
 
-func InitAuthService(userRepo userRepository.UserRepositoryInterface, logger2 logger.Logger) authService.AuthServiceInterface {
-	authServiceInterface := authService.NewAuthService(userRepo, logger2)
+// Player
+func InitPlayerRepository(db *storage.DbStore) playerRepository.PlayerRepositoryInterface {
+	playerRepositoryInterface := playerRepository.NewPlayerRepository(db)
+	return playerRepositoryInterface
+}
+
+func InitPlayerService(playerRepo playerRepository.PlayerRepositoryInterface) playerService.PlayerServiceInterface {
+	playerServiceInterface := playerService.NewPlayerService(playerRepo)
+	return playerServiceInterface
+}
+
+func InitPlayerController(ps playerService.PlayerServiceInterface, logger2 logger.Logger) playerController.PlayerControllerInterface {
+	playerControllerInterface := playerController.NewPlayerController(ps, logger2)
+	return playerControllerInterface
+}
+
+// Auth
+func InitAuthService(playerRepo playerRepository.PlayerRepositoryInterface, userRepo userRepository.UserRepositoryInterface, logger2 logger.Logger) authService.AuthServiceInterface {
+	authServiceInterface := authService.NewAuthService(playerRepo, userRepo, logger2)
 	return authServiceInterface
 }
 

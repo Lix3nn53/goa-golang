@@ -6,7 +6,6 @@ type User struct {
 	Email      string `json:"email" db:"email"`
 	McUsername string `json:"mc_username" db:"mc_username"`
 	Credits    int    `json:"credits" db:"credits"`
-	Sessions   string `json:"sessions" db:"sessions"`
 }
 
 // UpdateUser represents user resources.
@@ -24,6 +23,6 @@ type CreateUser struct {
 }
 
 // UpdateUser represents user resources.
-type UserSessions struct {
+type Sessions struct {
 	Sessions string `json:"sessions" validate:"required"`
 }

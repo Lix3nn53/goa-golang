@@ -19,7 +19,6 @@ type UserRepositoryInterface interface {
 	FindByID(uuid string) (user *userModel.User, err error)
 	RemoveByID(uuid string) error
 	UpdateByID(uuid string, user userModel.UpdateUser) error
-	CreateUUID(uuid string) (err error)
 	CreateWebData(uuid string, create userModel.CreateUser) (user *userModel.User, err error)
 	GetSessions(uuid string) (sessions string, err error)
 	AddSession(uuid string, refreshToken string) error
@@ -67,34 +66,6 @@ func (r *UserRepository) UpdateByID(uuid string, user userModel.UpdateUser) erro
 	}
 
 	if rows != 1 {
-		return appError.ErrNotFound
-	}
-
-	return nil
-}
-
-// Create implements the method to persist a new user
-func (r *UserRepository) CreateUUID(uuid string) (err error) {
-	createUserQuery := `INSERT INTO goa_player (uuid) 
-		VALUES (?)`
-
-	stmt, err := r.db.Prepare(createUserQuery)
-	if err != nil {
-		return err
-	}
-	defer stmt.Close()
-
-	result, err := stmt.Exec(uuid)
-	if err != nil {
-		return err
-	}
-
-	rows, err := result.RowsAffected()
-	if err != nil {
-		return err
-	}
-	n := int(rows) // truncated on machines with 32-bit ints
-	if n == 0 {
 		return appError.ErrNotFound
 	}
 

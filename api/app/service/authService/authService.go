@@ -11,7 +11,9 @@ import (
 	"strings"
 	"time"
 
+	"goa-golang/app/model/playerModel"
 	"goa-golang/app/model/userModel"
+	"goa-golang/app/repository/playerRepository"
 	"goa-golang/app/repository/userRepository"
 	"goa-golang/internal/logger"
 
@@ -30,13 +32,17 @@ type AuthServiceInterface interface {
 
 // billingService handles communication with the user repository
 type AuthService struct {
-	userRepo userRepository.UserRepositoryInterface
-	logger   logger.Logger
+	playerRepo playerRepository.PlayerRepositoryInterface
+	userRepo   userRepository.UserRepositoryInterface
+	logger     logger.Logger
 }
 
 // NewUserService implements the user service interface.
-func NewAuthService(userRepo userRepository.UserRepositoryInterface, logger logger.Logger) AuthServiceInterface {
+func NewAuthService(playerRepo playerRepository.PlayerRepositoryInterface,
+	userRepo userRepository.UserRepositoryInterface,
+	logger logger.Logger) AuthServiceInterface {
 	return &AuthService{
+		playerRepo,
 		userRepo,
 		logger,
 	}
@@ -229,7 +235,11 @@ func (s *AuthService) GoogleOauth2(code string) (refreshToken string, accessToke
 
 	if errors.Is(err, sql.ErrNoRows) {
 		// REGISTER USER IF DOES NOT EXIST
-		err := s.userRepo.CreateUUID(userId)
+		createPlayer := playerModel.CreatePlayer{
+			UUID: userId,
+		}
+
+		err := s.playerRepo.CreateUUID(createPlayer)
 		if err != nil {
 			if !strings.Contains(err.Error(), "Error 1062: Duplicate entry") { // UUID is in goa_player but not in goa_player_web so lets skip to CreateWebData
 				s.logger.Error(err.Error())
