@@ -49,8 +49,7 @@ func Setup(db *storage.DbStore, dbCache *storage.DbCache, logger logger.Logger) 
 	// v1 Routes
 	v1 := r.Group("/v1")
 	{
-		testMiddleware := middleware.NewTestMiddleware(logger)
-		routev1.SetupDocsRoute(v1, testMiddleware)
+		routev1.SetupDocsRoute(v1)
 
 		// user
 		userRepo := dic.InitUserRepository(db)

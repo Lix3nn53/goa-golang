@@ -109,7 +109,6 @@ func (s *AuthService) TokenValidate(tokenString string, secret string) (userUUID
 	})
 
 	if claims, ok := token.Claims.(*jwt.StandardClaims); ok && token.Valid {
-		fmt.Println("TOKEN DEBUG", claims.Issuer, claims.ExpiresAt)
 
 		return claims.Issuer, nil
 	} else {

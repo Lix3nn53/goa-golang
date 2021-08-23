@@ -1,6 +1,7 @@
 package playerRepository
 
 import (
+	"database/sql"
 	appError "goa-golang/app/error"
 	"goa-golang/app/model/playerModel"
 	"goa-golang/internal/storage"
@@ -27,13 +28,40 @@ func NewPlayerRepository(db *storage.DbStore) PlayerRepositoryInterface {
 
 // FindByID implements the method to find a user from the store
 func (r *PlayerRepository) FindByID(uuid string) (player *playerModel.Player, err error) {
-	player = &playerModel.Player{}
-
-	var query = "SELECT uuid, daily_last_date, staff_rank, premium_rank, premium_rank_date FROM goa_player WHERE uuid = ?"
+	var query = "SELECT daily_last_date, staff_rank, premium_rank, premium_rank_date FROM goa_player WHERE uuid = ?"
 	row := r.db.QueryRow(query, uuid)
 
-	if err := row.Scan(&player.UUID, &player.DailyLastDate, &player.StaffRank, &player.PremiumRank, &player.PremiumRankDate); err != nil {
+	var read1 sql.NullString
+	var read2 sql.NullString
+	var read3 sql.NullString
+	var read4 sql.NullString
+	if err := row.Scan(&read1, &read2, &read3, &read4); err != nil {
 		return nil, err
+	}
+
+	var dailyLastDate string
+	if read1.Valid {
+		dailyLastDate = read1.String
+	}
+	var staffRank string
+	if read2.Valid {
+		staffRank = read2.String
+	}
+	var premiumRank string
+	if read3.Valid {
+		premiumRank = read3.String
+	}
+	var premiumRankDate string
+	if read4.Valid {
+		premiumRankDate = read4.String
+	}
+
+	player = &playerModel.Player{
+		UUID:            uuid,
+		DailyLastDate:   dailyLastDate,
+		StaffRank:       staffRank,
+		PremiumRank:     premiumRank,
+		PremiumRankDate: premiumRankDate,
 	}
 
 	return player, nil
