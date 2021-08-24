@@ -6,8 +6,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func SetupBillingRoute(userBilling *gin.RouterGroup, bc billingController.BillingControllerInterface) *gin.RouterGroup {
-	userBilling.POST("", bc.AddCustomer)
+func SetupBillingRoute(userBilling *gin.RouterGroup, c billingController.BillingControllerInterface) *gin.RouterGroup {
+	userBilling.POST("", c.AddCustomer)
 
 	return userBilling
 }

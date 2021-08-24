@@ -7,10 +7,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func SetupUserRoute(users *gin.RouterGroup, uc userController.UserControllerInterface, ac authController.AuthControllerInterface) *gin.RouterGroup {
+func SetupUserRoute(users *gin.RouterGroup, c userController.UserControllerInterface, ac authController.AuthControllerInterface) *gin.RouterGroup {
 	users.Use(ac.AuthMiddleware())
 
-	users.GET("/info", uc.Info)
+	users.GET("/info", c.Info)
 
 	return users
 }

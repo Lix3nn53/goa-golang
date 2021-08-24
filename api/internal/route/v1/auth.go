@@ -6,10 +6,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func SetupAuthRoute(auth *gin.RouterGroup, ac authController.AuthControllerInterface) *gin.RouterGroup {
-	auth.GET("refresh_token", ac.RefreshAccessToken)
-	auth.GET("logout", ac.Logout)
-	auth.GET("google", ac.GoogleOauth2)
+func SetupAuthRoute(auth *gin.RouterGroup, c authController.AuthControllerInterface) *gin.RouterGroup {
+	auth.GET("refresh_token", c.RefreshAccessToken)
+	auth.GET("logout", c.Logout)
+	auth.GET("google", c.GoogleOauth2)
 
 	return auth
 }

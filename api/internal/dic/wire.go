@@ -10,11 +10,14 @@ package dic
 
 import (
 	"goa-golang/app/controller/authController"
+	"goa-golang/app/controller/characterController"
 	"goa-golang/app/controller/playerController"
 	"goa-golang/app/controller/userController"
+	"goa-golang/app/repository/characterRepository"
 	"goa-golang/app/repository/playerRepository"
 	"goa-golang/app/repository/userRepository"
 	"goa-golang/app/service/authService"
+	"goa-golang/app/service/characterService"
 	"goa-golang/app/service/playerService"
 	"goa-golang/app/service/userService"
 	"goa-golang/internal/logger"
@@ -59,6 +62,25 @@ func initPlayerController(ps playerService.PlayerServiceInterface, logger logger
 	wire.Build(playerController.NewPlayerController)
 
 	return &playerController.PlayerController{}
+}
+
+// Character
+func initCharacterRepository(db *storage.DbStore) characterRepository.CharacterRepositoryInterface {
+	wire.Build(characterRepository.NewCharacterRepository)
+
+	return &characterRepository.CharacterRepository{}
+}
+
+func initCharacterService(characterRepo characterRepository.CharacterRepositoryInterface) characterService.CharacterServiceInterface {
+	wire.Build(characterService.NewCharacterService)
+
+	return &characterService.CharacterService{}
+}
+
+func initCharacterController(ps characterService.CharacterServiceInterface, logger logger.Logger) characterController.CharacterControllerInterface {
+	wire.Build(characterController.NewCharacterController)
+
+	return &characterController.CharacterController{}
 }
 
 // Auth

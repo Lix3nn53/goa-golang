@@ -82,6 +82,15 @@ func Setup(db *storage.DbStore, dbCache *storage.DbCache, logger logger.Logger) 
 
 			routev1.SetupPlayerRoute(players, playerCont, authCont)
 		}
+
+		characters := v1.Group("/characters")
+		{
+			characterRepo := dic.InitCharacterRepository(db)
+			characterService := dic.InitCharacterService(characterRepo)
+			characterCont := dic.InitCharacterController(characterService, logger)
+
+			routev1.SetupPlayerRoute(characters, characterCont, authCont)
+		}
 	}
 
 	return r

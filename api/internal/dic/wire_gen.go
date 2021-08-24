@@ -6,11 +6,14 @@ package dic
 
 import (
 	"goa-golang/app/controller/authController"
+	"goa-golang/app/controller/characterController"
 	"goa-golang/app/controller/playerController"
 	"goa-golang/app/controller/userController"
+	"goa-golang/app/repository/characterRepository"
 	"goa-golang/app/repository/playerRepository"
 	"goa-golang/app/repository/userRepository"
 	"goa-golang/app/service/authService"
+	"goa-golang/app/service/characterService"
 	"goa-golang/app/service/playerService"
 	"goa-golang/app/service/userService"
 	"goa-golang/internal/logger"
@@ -49,6 +52,22 @@ func InitPlayerService(playerRepo playerRepository.PlayerRepositoryInterface) pl
 func InitPlayerController(ps playerService.PlayerServiceInterface, logger2 logger.Logger) playerController.PlayerControllerInterface {
 	playerControllerInterface := playerController.NewPlayerController(ps, logger2)
 	return playerControllerInterface
+}
+
+// Character
+func InitCharacterRepository(db *storage.DbStore) characterRepository.CharacterRepositoryInterface {
+	characterRepositoryInterface := characterRepository.NewCharacterRepository(db)
+	return characterRepositoryInterface
+}
+
+func InitCharacterService(characterRepo characterRepository.CharacterRepositoryInterface) characterService.CharacterServiceInterface {
+	characterServiceInterface := characterService.NewCharacterService(characterRepo)
+	return characterServiceInterface
+}
+
+func InitCharacterController(ps characterService.CharacterServiceInterface, logger2 logger.Logger) characterController.CharacterControllerInterface {
+	characterControllerInterface := characterController.NewCharacterController(ps, logger2)
+	return characterControllerInterface
 }
 
 // Auth
