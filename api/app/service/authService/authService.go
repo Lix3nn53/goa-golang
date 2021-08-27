@@ -28,6 +28,7 @@ type AuthServiceInterface interface {
 	TokenValidateRefresh(tokenString string) (userUUID string, err error)
 	Logout(uuid string, refreshToken string) error
 	GoogleOauth2(code string) (refreshToken string, accessToken string, err error)
+	MinecraftOauth2(code string) (refreshToken string, accessToken string, err error)
 }
 
 // billingService handles communication with the user repository
@@ -167,7 +168,7 @@ func (s *AuthService) GoogleOauth2(code string) (refreshToken string, accessToke
 		"code":          code,
 		"client_id":     os.Getenv("GOOGLE_CLIENT_ID"),
 		"client_secret": os.Getenv("GOOGLE_CLIENT_SECRET"),
-		"redirect_uri":  os.Getenv("GOOGLE_REDIRECT_URI"),
+		"redirect_uri":  os.Getenv("OAUTH_REDIRECT_URI"),
 		"grant_type":    "authorization_code",
 	}
 
@@ -277,4 +278,329 @@ func (s *AuthService) GoogleOauth2(code string) (refreshToken string, accessToke
 	}
 
 	return refreshToken, accessToken, nil
+}
+
+// FindByID implements the method to find a user model by primary key
+func (s *AuthService) MinecraftOauth2(code string) (refreshToken string, accessToken string, err error) {
+
+	client := &http.Client{Timeout: 10 * time.Second}
+
+	accessTokenMicrosoft, err := s.microsoftToken(client, code)
+	if err != nil {
+		return "", "", err
+	}
+
+	xblToken, uhs, err := s.microsoftXBL(client, accessTokenMicrosoft)
+	if err != nil {
+		return "", "", err
+	}
+
+	xstsToken, err := s.microsoftXSTS(client, xblToken)
+	if err != nil {
+		return "", "", err
+	}
+
+	minecraftAccessToken, err := s.microsoftMinecraftAuth(client, uhs, xstsToken)
+	if err != nil {
+		return "", "", err
+	}
+
+	uuid, name, err := s.microsoftMinecraftProfile(client, minecraftAccessToken)
+	if err != nil {
+		return "", "", err
+	}
+
+	// FIND USER IF EXISTS
+	user, err := s.userRepo.FindByID(uuid)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		// REGISTER USER IF DOES NOT EXIST
+		createPlayer := playerModel.CreatePlayer{
+			UUID: uuid,
+		}
+
+		err := s.playerRepo.CreateUUID(createPlayer)
+		if err != nil {
+			if !strings.Contains(err.Error(), "Error 1062: Duplicate entry") { // UUID is in goa_player but not in goa_player_web so lets skip to CreateWebData
+				s.logger.Error(err.Error())
+				return "", "", err
+			}
+		}
+
+		userModel := userModel.CreateUser{
+			McUsername: name,
+			Credits:    0,
+		}
+		user, err = s.userRepo.CreateWebData(uuid, userModel)
+		if err != nil {
+			s.logger.Error(err.Error())
+			return "", "", err
+		}
+	} else if err != nil {
+		s.logger.Error(err.Error())
+		return "", "", err
+	}
+
+	refreshToken, err = s.tokenBuildRefresh(user.UUID)
+	if err != nil {
+		s.logger.Error(err.Error())
+		return "", "", err
+	}
+
+	accessToken, err = s.TokenBuildAccess(user.UUID)
+	if err != nil {
+		s.logger.Error(err.Error())
+		return "", "", err
+	}
+
+	return refreshToken, accessToken, nil
+}
+
+func (s *AuthService) microsoftToken(client *http.Client, code string) (accessTokenMicrosoft string, err error) {
+	url := "https://login.microsoftonline.com/common/oauth2/v2.0/token"
+
+	// Access token request
+	data := map[string]interface{}{
+		"code":          code,
+		"client_id":     os.Getenv("MICROSOFT_CLIENT_ID"),
+		"client_secret": os.Getenv("MICROSOFT_CLIENT_SECRET"),
+		"redirect_uri":  os.Getenv("OAUTH_REDIRECT_URI"),
+		"grant_type":    "authorization_code",
+	}
+
+	json_data, err := json.Marshal(data)
+	if err != nil {
+		return "", err
+	}
+
+	request, _ := http.NewRequest(http.MethodPost, url, bytes.NewReader(json_data))
+	request.Header.Set("Content-Type", "application/x-www-url-form-urlencoded")
+	request.Header.Set("Accept", "application/json")
+
+	// Access token response
+	response, err := client.Do((request))
+	if err != nil {
+		return "", err
+	}
+	defer response.Body.Close()
+
+	var reponseJson map[string]interface{}
+	err = json.NewDecoder(response.Body).Decode(&reponseJson)
+	if err != nil {
+		return "", err
+	}
+	// print response
+	j, err := json.MarshalIndent(reponseJson, "", "\t")
+	if err != nil {
+		return "", err
+	}
+	s.logger.Infof(string(j))
+	// check for error field in json
+	if reponseJson["error"] != nil {
+		err = errors.New(reponseJson["error"].(string))
+		return "", err
+	}
+	accessTokenMicrosoft = reponseJson["access_token"].(string)
+
+	return accessTokenMicrosoft, nil
+}
+
+func (s *AuthService) microsoftXBL(client *http.Client, accessTokenMicrosoft string) (xblToken string, uhs string, err error) {
+	url := "https://user.auth.xboxlive.com/user/authenticate"
+
+	// Xbox live auth request
+	data := map[string]interface{}{
+		"RelyingParty": "http://auth.xboxlive.com",
+		"TokenType":    "JWT",
+		"Properties": map[string]interface{}{
+			"AuthMethod": "RPS",
+			"SiteName":   "user.auth.xboxlive.com",
+			"RpsTicket":  "d=" + accessTokenMicrosoft,
+		},
+	}
+
+	json_data, err := json.Marshal(data)
+	if err != nil {
+		return "", "", err
+	}
+
+	request, _ := http.NewRequest(http.MethodPost, url, bytes.NewReader(json_data))
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+	request.Header.Set("x-xbl-contract-version", "1")
+
+	// Xbox live auth response
+	response, err := client.Do((request))
+	if err != nil {
+		return "", "", err
+	}
+	defer response.Body.Close()
+
+	var responseJson map[string]interface{}
+	err = json.NewDecoder(response.Body).Decode(&responseJson)
+	if err != nil {
+		return "", "", err
+	}
+	xblToken = responseJson["Token"].(string)
+	uhs = data["DisplayClaims"].(map[string]interface{})["xui"].([]interface{})[0].(map[string]interface{})["uhs"].(string)
+
+	j, err := json.MarshalIndent(responseJson, "", "\t")
+	if err != nil {
+		return "", "", err
+	}
+	s.logger.Infof(string(j))
+
+	return xblToken, uhs, nil
+}
+
+func (s *AuthService) microsoftXSTS(client *http.Client, xblToken string) (xstsToken string, err error) {
+	url := "https://xsts.auth.xboxlive.com/xsts/authorize"
+
+	// Xsts request
+	data := map[string]interface{}{
+		"Properties": map[string]interface{}{
+			"SandboxId": "RETAIL",
+			"UserTokens": []string{
+				xblToken,
+			},
+		},
+		"RelyingParty": "rp://api.minecraftservices.com/",
+		"TokenType":    "JWT",
+	}
+
+	json_data, err := json.Marshal(data)
+	if err != nil {
+		return "", err
+	}
+
+	request, _ := http.NewRequest(http.MethodPost, url, bytes.NewReader(json_data))
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+	request.Header.Set("x-xbl-contract-version", "1")
+
+	// Xsts response
+	response, err := client.Do((request))
+	if err != nil {
+		return "", err
+	}
+	defer response.Body.Close()
+
+	var responseJson map[string]interface{}
+	err = json.NewDecoder(response.Body).Decode(&responseJson)
+	if err != nil {
+		return "", err
+	}
+	xstsToken = responseJson["Token"].(string)
+
+	j, err := json.MarshalIndent(responseJson, "", "\t")
+	if err != nil {
+		return "", err
+	}
+	s.logger.Infof(string(j))
+
+	return xstsToken, nil
+}
+
+func (s *AuthService) microsoftMinecraftAuth(client *http.Client, uhs string, xstsToken string) (minecraftAccessToken string, err error) {
+	url := "https://api.minecraftservices.com/authentication/login_with_xbox"
+
+	// Xsts request
+	data := map[string]interface{}{
+		"identityToken":       "XBL3.0 x=" + uhs + ";" + xstsToken,
+		"ensureLegacyEnabled": true,
+	}
+
+	json_data, err := json.Marshal(data)
+	if err != nil {
+		return "", err
+	}
+
+	request, _ := http.NewRequest(http.MethodPost, url, bytes.NewReader(json_data))
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+
+	// Xsts response
+	response, err := client.Do((request))
+	if err != nil {
+		return "", err
+	}
+	defer response.Body.Close()
+
+	var responseJson map[string]interface{}
+	err = json.NewDecoder(response.Body).Decode(&responseJson)
+	if err != nil {
+		return "", err
+	}
+	minecraftAccessToken = responseJson["access_token"].(string)
+
+	j, err := json.MarshalIndent(responseJson, "", "\t")
+	if err != nil {
+		return "", err
+	}
+	s.logger.Infof(string(j))
+
+	return minecraftAccessToken, nil
+}
+
+/* func (s *AuthService) microsoftMinecraftOwnership(client *http.Client, minecraftAccessToken string) (owner bool, err error) {
+	url := "https://api.minecraftservices.com/entitlements/mcstore"
+
+	request, _ := http.NewRequest(http.MethodGet, url, nil)
+	request.Header.Set("Authorization", "Bearer "+minecraftAccessToken)
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+
+	// Xsts response
+	response, err := client.Do((request))
+	if err != nil {
+		return false, err
+	}
+	defer response.Body.Close()
+
+	var responseJson map[string]interface{}
+	err = json.NewDecoder(response.Body).Decode(&responseJson)
+	if err != nil {
+		return false, err
+	}
+	minecraftAccessToken = responseJson["access_token"].(string)
+
+	j, err := json.MarshalIndent(responseJson, "", "\t")
+	if err != nil {
+		return false, err
+	}
+	s.logger.Infof(string(j))
+
+	return true, nil
+} */
+
+func (s *AuthService) microsoftMinecraftProfile(client *http.Client, minecraftAccessToken string) (uuid string, name string, err error) {
+	url := "https://api.minecraftservices.com/minecraft/profile"
+
+	request, _ := http.NewRequest(http.MethodGet, url, nil)
+	request.Header.Set("Authorization", "Bearer "+minecraftAccessToken)
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Accept", "application/json")
+
+	// Xsts response
+	response, err := client.Do((request))
+	if err != nil {
+		return "", "", err
+	}
+	defer response.Body.Close()
+
+	var responseJson map[string]interface{}
+	err = json.NewDecoder(response.Body).Decode(&responseJson)
+	if err != nil {
+		return "", "", err
+	}
+	uuid = responseJson["id"].(string)
+	name = responseJson["name"].(string)
+
+	j, err := json.MarshalIndent(responseJson, "", "\t")
+	if err != nil {
+		return "", "", err
+	}
+	s.logger.Infof(string(j))
+
+	return uuid, name, nil
 }

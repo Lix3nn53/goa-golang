@@ -10,6 +10,7 @@ func SetupAuthRoute(auth *gin.RouterGroup, c authController.AuthControllerInterf
 	auth.GET("refresh_token", c.RefreshAccessToken)
 	auth.GET("logout", c.Logout)
 	auth.GET("google", c.GoogleOauth2)
+	auth.GET("minecraft", c.MinecraftOauth2)
 
 	return auth
 }
