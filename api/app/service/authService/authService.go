@@ -2,12 +2,15 @@ package authService
 
 import (
 	"bytes"
+	"crypto/tls"
 	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -156,6 +159,49 @@ func (s *AuthService) Logout(uuid string, refreshToken string) error {
 	return nil
 }
 
+func (s *AuthService) onSuccessfulOauth(uuid string, userModel userModel.CreateUser) (refreshToken string, accessToken string, err error) {
+	// FIND USER IF EXISTS
+	user, err := s.userRepo.FindByID(uuid)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		// REGISTER USER IF DOES NOT EXIST
+		createPlayer := playerModel.CreatePlayer{
+			UUID: uuid,
+		}
+
+		err := s.playerRepo.CreateUUID(createPlayer)
+		if err != nil {
+			if !strings.Contains(err.Error(), "Error 1062: Duplicate entry") { // UUID is in goa_player but not in goa_player_web so lets skip to CreateWebData
+				s.logger.Error(err.Error())
+				return "", "", err
+			}
+		}
+
+		user, err = s.userRepo.CreateWebData(uuid, userModel)
+		if err != nil {
+			s.logger.Error(err.Error())
+			return "", "", err
+		}
+	} else if err != nil {
+		s.logger.Error(err.Error())
+		return "", "", err
+	}
+
+	refreshToken, err = s.tokenBuildRefresh(user.UUID)
+	if err != nil {
+		s.logger.Error(err.Error())
+		return "", "", err
+	}
+
+	accessToken, err = s.TokenBuildAccess(user.UUID)
+	if err != nil {
+		s.logger.Error(err.Error())
+		return "", "", err
+	}
+
+	return refreshToken, accessToken, nil
+}
+
 // FindByID implements the method to find a user model by primary key
 func (s *AuthService) GoogleOauth2(code string) (refreshToken string, accessToken string, err error) {
 	tokenUrl := "https://oauth2.googleapis.com/token"
@@ -230,50 +276,16 @@ func (s *AuthService) GoogleOauth2(code string) (refreshToken string, accessToke
 	}
 	s.logger.Infof(string(j))
 
-	// FIND USER IF EXISTS
-	user, err := s.userRepo.FindByID(userId)
+	name := userInfoResponseJson["name"].(string)
+	email := userInfoResponseJson["email"].(string)
 
-	if errors.Is(err, sql.ErrNoRows) {
-		// REGISTER USER IF DOES NOT EXIST
-		createPlayer := playerModel.CreatePlayer{
-			UUID: userId,
-		}
-
-		err := s.playerRepo.CreateUUID(createPlayer)
-		if err != nil {
-			if !strings.Contains(err.Error(), "Error 1062: Duplicate entry") { // UUID is in goa_player but not in goa_player_web so lets skip to CreateWebData
-				s.logger.Error(err.Error())
-				return "", "", err
-			}
-		}
-
-		name := userInfoResponseJson["name"].(string)
-		email := userInfoResponseJson["email"].(string)
-
-		userModel := userModel.CreateUser{
-			Email:      email,
-			McUsername: name,
-			Credits:    0,
-		}
-		user, err = s.userRepo.CreateWebData(userId, userModel)
-		if err != nil {
-			s.logger.Error(err.Error())
-			return "", "", err
-		}
-	} else if err != nil {
-		s.logger.Error(err.Error())
-		return "", "", err
+	userModel := userModel.CreateUser{
+		Email:      email,
+		McUsername: name,
+		Credits:    0,
 	}
-
-	refreshToken, err = s.tokenBuildRefresh(user.UUID)
+	refreshToken, accessToken, err = s.onSuccessfulOauth(userId, userModel)
 	if err != nil {
-		s.logger.Error(err.Error())
-		return "", "", err
-	}
-
-	accessToken, err = s.TokenBuildAccess(user.UUID)
-	if err != nil {
-		s.logger.Error(err.Error())
 		return "", "", err
 	}
 
@@ -282,8 +294,17 @@ func (s *AuthService) GoogleOauth2(code string) (refreshToken string, accessToke
 
 // FindByID implements the method to find a user model by primary key
 func (s *AuthService) MinecraftOauth2(code string) (refreshToken string, accessToken string, err error) {
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{
+			Renegotiation:      tls.RenegotiateOnceAsClient,
+			InsecureSkipVerify: true,
+		},
+	}
 
-	client := &http.Client{Timeout: 10 * time.Second}
+	client := &http.Client{
+		Timeout:   10 * time.Second,
+		Transport: tr,
+	}
 
 	accessTokenMicrosoft, err := s.microsoftToken(client, code)
 	if err != nil {
@@ -310,46 +331,12 @@ func (s *AuthService) MinecraftOauth2(code string) (refreshToken string, accessT
 		return "", "", err
 	}
 
-	// FIND USER IF EXISTS
-	user, err := s.userRepo.FindByID(uuid)
-
-	if errors.Is(err, sql.ErrNoRows) {
-		// REGISTER USER IF DOES NOT EXIST
-		createPlayer := playerModel.CreatePlayer{
-			UUID: uuid,
-		}
-
-		err := s.playerRepo.CreateUUID(createPlayer)
-		if err != nil {
-			if !strings.Contains(err.Error(), "Error 1062: Duplicate entry") { // UUID is in goa_player but not in goa_player_web so lets skip to CreateWebData
-				s.logger.Error(err.Error())
-				return "", "", err
-			}
-		}
-
-		userModel := userModel.CreateUser{
-			McUsername: name,
-			Credits:    0,
-		}
-		user, err = s.userRepo.CreateWebData(uuid, userModel)
-		if err != nil {
-			s.logger.Error(err.Error())
-			return "", "", err
-		}
-	} else if err != nil {
-		s.logger.Error(err.Error())
-		return "", "", err
+	userModel := userModel.CreateUser{
+		McUsername: name,
+		Credits:    0,
 	}
-
-	refreshToken, err = s.tokenBuildRefresh(user.UUID)
+	refreshToken, accessToken, err = s.onSuccessfulOauth(uuid, userModel)
 	if err != nil {
-		s.logger.Error(err.Error())
-		return "", "", err
-	}
-
-	accessToken, err = s.TokenBuildAccess(user.UUID)
-	if err != nil {
-		s.logger.Error(err.Error())
 		return "", "", err
 	}
 
@@ -357,25 +344,20 @@ func (s *AuthService) MinecraftOauth2(code string) (refreshToken string, accessT
 }
 
 func (s *AuthService) microsoftToken(client *http.Client, code string) (accessTokenMicrosoft string, err error) {
-	url := "https://login.microsoftonline.com/common/oauth2/v2.0/token"
+	reqUrl := "https://login.microsoftonline.com/consumers/oauth2/v2.0/token"
 
-	// Access token request
-	data := map[string]interface{}{
-		"code":          code,
-		"client_id":     os.Getenv("MICROSOFT_CLIENT_ID"),
-		"client_secret": os.Getenv("MICROSOFT_CLIENT_SECRET"),
-		"redirect_uri":  os.Getenv("OAUTH_REDIRECT_URI"),
-		"grant_type":    "authorization_code",
-	}
+	data := url.Values{}
+	data.Set("grant_type", "authorization_code")
+	data.Set("code", code)
+	data.Set("client_id", os.Getenv("MICROSOFT_CLIENT_ID"))
+	data.Set("client_secret", os.Getenv("MICROSOFT_CLIENT_SECRET"))
+	data.Set("redirect_uri", os.Getenv("OAUTH_REDIRECT_URI"))
 
-	json_data, err := json.Marshal(data)
-	if err != nil {
-		return "", err
-	}
-
-	request, _ := http.NewRequest(http.MethodPost, url, bytes.NewReader(json_data))
-	request.Header.Set("Content-Type", "application/x-www-url-form-urlencoded")
+	request, _ := http.NewRequest(http.MethodPost, reqUrl, strings.NewReader(data.Encode()))
+	request.Close = true
+	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	request.Header.Set("Accept", "application/json")
+	request.Header.Add("Content-Length", strconv.Itoa(len(data.Encode())))
 
 	// Access token response
 	response, err := client.Do((request))
@@ -406,6 +388,7 @@ func (s *AuthService) microsoftToken(client *http.Client, code string) (accessTo
 }
 
 func (s *AuthService) microsoftXBL(client *http.Client, accessTokenMicrosoft string) (xblToken string, uhs string, err error) {
+	s.logger.Infof("microsoftXBL START")
 	url := "https://user.auth.xboxlive.com/user/authenticate"
 
 	// Xbox live auth request
@@ -425,6 +408,7 @@ func (s *AuthService) microsoftXBL(client *http.Client, accessTokenMicrosoft str
 	}
 
 	request, _ := http.NewRequest(http.MethodPost, url, bytes.NewReader(json_data))
+	request.Close = true
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("Accept", "application/json")
 	request.Header.Set("x-xbl-contract-version", "1")
@@ -432,23 +416,28 @@ func (s *AuthService) microsoftXBL(client *http.Client, accessTokenMicrosoft str
 	// Xbox live auth response
 	response, err := client.Do((request))
 	if err != nil {
+		s.logger.Errorf(err.Error())
 		return "", "", err
 	}
 	defer response.Body.Close()
 
+	s.logger.Infof(response.Status)
+
 	var responseJson map[string]interface{}
 	err = json.NewDecoder(response.Body).Decode(&responseJson)
 	if err != nil {
+		s.logger.Errorf(err.Error())
 		return "", "", err
 	}
-	xblToken = responseJson["Token"].(string)
-	uhs = data["DisplayClaims"].(map[string]interface{})["xui"].([]interface{})[0].(map[string]interface{})["uhs"].(string)
 
 	j, err := json.MarshalIndent(responseJson, "", "\t")
 	if err != nil {
+		s.logger.Errorf(err.Error())
 		return "", "", err
 	}
 	s.logger.Infof(string(j))
+	xblToken = responseJson["Token"].(string)
+	uhs = responseJson["DisplayClaims"].(map[string]interface{})["xui"].([]interface{})[0].(map[string]interface{})["uhs"].(string)
 
 	return xblToken, uhs, nil
 }
@@ -474,6 +463,7 @@ func (s *AuthService) microsoftXSTS(client *http.Client, xblToken string) (xstsT
 	}
 
 	request, _ := http.NewRequest(http.MethodPost, url, bytes.NewReader(json_data))
+	request.Close = true
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("Accept", "application/json")
 	request.Header.Set("x-xbl-contract-version", "1")
@@ -490,13 +480,13 @@ func (s *AuthService) microsoftXSTS(client *http.Client, xblToken string) (xstsT
 	if err != nil {
 		return "", err
 	}
-	xstsToken = responseJson["Token"].(string)
 
 	j, err := json.MarshalIndent(responseJson, "", "\t")
 	if err != nil {
 		return "", err
 	}
 	s.logger.Infof(string(j))
+	xstsToken = responseJson["Token"].(string)
 
 	return xstsToken, nil
 }
@@ -516,6 +506,7 @@ func (s *AuthService) microsoftMinecraftAuth(client *http.Client, uhs string, xs
 	}
 
 	request, _ := http.NewRequest(http.MethodPost, url, bytes.NewReader(json_data))
+	request.Close = true
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("Accept", "application/json")
 
@@ -531,13 +522,13 @@ func (s *AuthService) microsoftMinecraftAuth(client *http.Client, uhs string, xs
 	if err != nil {
 		return "", err
 	}
-	minecraftAccessToken = responseJson["access_token"].(string)
 
 	j, err := json.MarshalIndent(responseJson, "", "\t")
 	if err != nil {
 		return "", err
 	}
 	s.logger.Infof(string(j))
+	minecraftAccessToken = responseJson["access_token"].(string)
 
 	return minecraftAccessToken, nil
 }
@@ -546,6 +537,7 @@ func (s *AuthService) microsoftMinecraftAuth(client *http.Client, uhs string, xs
 	url := "https://api.minecraftservices.com/entitlements/mcstore"
 
 	request, _ := http.NewRequest(http.MethodGet, url, nil)
+	request.Close = true
 	request.Header.Set("Authorization", "Bearer "+minecraftAccessToken)
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("Accept", "application/json")
@@ -562,13 +554,13 @@ func (s *AuthService) microsoftMinecraftAuth(client *http.Client, uhs string, xs
 	if err != nil {
 		return false, err
 	}
-	minecraftAccessToken = responseJson["access_token"].(string)
 
 	j, err := json.MarshalIndent(responseJson, "", "\t")
 	if err != nil {
 		return false, err
 	}
 	s.logger.Infof(string(j))
+	minecraftAccessToken = responseJson["access_token"].(string)
 
 	return true, nil
 } */
@@ -577,6 +569,7 @@ func (s *AuthService) microsoftMinecraftProfile(client *http.Client, minecraftAc
 	url := "https://api.minecraftservices.com/minecraft/profile"
 
 	request, _ := http.NewRequest(http.MethodGet, url, nil)
+	request.Close = true
 	request.Header.Set("Authorization", "Bearer "+minecraftAccessToken)
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("Accept", "application/json")
@@ -593,14 +586,19 @@ func (s *AuthService) microsoftMinecraftProfile(client *http.Client, minecraftAc
 	if err != nil {
 		return "", "", err
 	}
-	uuid = responseJson["id"].(string)
-	name = responseJson["name"].(string)
 
 	j, err := json.MarshalIndent(responseJson, "", "\t")
 	if err != nil {
 		return "", "", err
 	}
 	s.logger.Infof(string(j))
+
+	if _, ok := responseJson["error"]; ok {
+		return "", "", errors.New("your xbox account does not own minecraft")
+	}
+
+	uuid = responseJson["id"].(string)
+	name = responseJson["name"].(string)
 
 	return uuid, name, nil
 }
