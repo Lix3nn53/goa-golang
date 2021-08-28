@@ -23,12 +23,17 @@ import (
 	"github.com/golang-jwt/jwt"
 )
 
+type MyCustomClaims struct {
+	IssuerField string `json:"issuer_field"`
+	jwt.StandardClaims
+}
+
 //UserServiceInterface define the user service interface methods
 type AuthServiceInterface interface {
-	TokenBuildAccess(uuid string) (tokenString string, err error)
-	tokenBuildRefresh(uuid string) (tokenString string, err error)
-	TokenValidate(tokenString string, secret string) (userUUID string, err error)
-	TokenValidateRefresh(tokenString string) (userUUID string, err error)
+	TokenBuildAccess(id string, id_field string) (tokenString string, err error)
+	tokenBuildRefresh(id string, id_field string) (tokenString string, err error)
+	TokenValidate(tokenString string, secret string) (id string, id_field string, err error)
+	TokenValidateRefresh(tokenString string) (id string, id_field string, err error)
 	Logout(uuid string, refreshToken string) error
 	GoogleOauth2(code string) (refreshToken string, accessToken string, err error)
 	MinecraftOauth2(code string) (refreshToken string, accessToken string, err error)
@@ -53,12 +58,17 @@ func NewAuthService(playerRepo playerRepository.PlayerRepositoryInterface,
 }
 
 // FindByID implements the method to find a user model by primary key
-func (s *AuthService) TokenBuildAccess(uuid string) (tokenString string, err error) {
+func (s *AuthService) TokenBuildAccess(id string, id_field string) (tokenString string, err error) {
 	// Create a new token object, specifying signing method and the claims
 	// you would like it to contain.
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.StandardClaims{
-		Issuer:    uuid,
-		ExpiresAt: time.Now().Add(time.Duration(1) * time.Minute).Unix(),
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, MyCustomClaims{
+		id_field,
+		jwt.StandardClaims{
+			Issuer:    id,
+			Subject:   id_field,
+			ExpiresAt: time.Now().Add(time.Duration(1) * time.Minute).Unix(),
+		},
 	})
 
 	// Sign and get the complete encoded token as a string using the secret
@@ -72,12 +82,16 @@ func (s *AuthService) TokenBuildAccess(uuid string) (tokenString string, err err
 }
 
 // FindByID implements the method to find a user model by primary key
-func (s *AuthService) tokenBuildRefresh(uuid string) (tokenString string, err error) {
+func (s *AuthService) tokenBuildRefresh(id string, id_field string) (tokenString string, err error) {
 	// Create a new token object, specifying signing method and the claims
 	// you would like it to contain.
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.StandardClaims{
-		Issuer:    uuid,
-		ExpiresAt: time.Now().AddDate(0, 1, 0).Unix(),
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, MyCustomClaims{
+		id_field,
+		jwt.StandardClaims{
+			Issuer:    id,
+			Subject:   id_field,
+			ExpiresAt: time.Now().AddDate(0, 1, 0).Unix(),
+		},
 	})
 
 	// Sign and get the complete encoded token as a string using the secret
@@ -87,7 +101,7 @@ func (s *AuthService) tokenBuildRefresh(uuid string) (tokenString string, err er
 		return "", err
 	}
 
-	err = s.userRepo.AddSession(uuid, tokenString)
+	err = s.userRepo.AddSession(id, tokenString)
 	if err != nil {
 		return "", err
 	}
@@ -96,7 +110,7 @@ func (s *AuthService) tokenBuildRefresh(uuid string) (tokenString string, err er
 }
 
 // FindByID implements the method to find a user model by primary key
-func (s *AuthService) TokenValidate(tokenString string, secret string) (userUUID string, err error) {
+func (s *AuthService) TokenValidate(tokenString string, secret string) (id string, id_field string, err error) {
 	// Parse takes the token string and a function for looking up the key. The latter is especially
 	// useful if you use multiple keys for your application.  The standard is to use 'kid' in the
 	// head of the token to identify which key to use, but the parsed token (head and claims) is provided
@@ -112,24 +126,24 @@ func (s *AuthService) TokenValidate(tokenString string, secret string) (userUUID
 		return hmacSampleSecret, nil
 	})
 
-	if claims, ok := token.Claims.(*jwt.StandardClaims); ok && token.Valid {
+	if claims, ok := token.Claims.(*MyCustomClaims); ok && token.Valid {
 
-		return claims.Issuer, nil
+		return claims.Issuer, claims.IssuerField, nil
 	} else {
-		return "", err
+		return "", "", err
 	}
 }
 
 // FindByID implements the method to find a user model by primary key
-func (s *AuthService) TokenValidateRefresh(tokenString string) (userUUID string, err error) {
-	userUUID, err = s.TokenValidate(tokenString, os.Getenv("REFRESH_SECRET"))
+func (s *AuthService) TokenValidateRefresh(tokenString string) (id string, id_field string, err error) {
+	id, id_field, err = s.TokenValidate(tokenString, os.Getenv("REFRESH_SECRET"))
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
-	sessions, err := s.userRepo.GetSessions(userUUID)
+	sessions, err := s.userRepo.GetSessions(id)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	split := strings.Split(sessions, "/")
@@ -143,10 +157,10 @@ func (s *AuthService) TokenValidateRefresh(tokenString string) (userUUID string,
 	}
 
 	if !contains {
-		return "", errors.New("session is not active")
+		return "", "", errors.New("session is not active")
 	}
 
-	return userUUID, nil
+	return id, id_field, nil
 }
 
 // FindByID implements the method to find a user model by primary key
@@ -157,49 +171,6 @@ func (s *AuthService) Logout(uuid string, refreshToken string) error {
 	}
 
 	return nil
-}
-
-func (s *AuthService) onSuccessfulOauth(uuid string, userModel userModel.CreateUser) (refreshToken string, accessToken string, err error) {
-	// FIND USER IF EXISTS
-	user, err := s.userRepo.FindByID(uuid)
-
-	if errors.Is(err, sql.ErrNoRows) {
-		// REGISTER USER IF DOES NOT EXIST
-		createPlayer := playerModel.CreatePlayer{
-			UUID: uuid,
-		}
-
-		err := s.playerRepo.CreateUUID(createPlayer)
-		if err != nil {
-			if !strings.Contains(err.Error(), "Error 1062: Duplicate entry") { // UUID is in goa_player but not in goa_player_web so lets skip to CreateWebData
-				s.logger.Error(err.Error())
-				return "", "", err
-			}
-		}
-
-		user, err = s.userRepo.CreateWebData(uuid, userModel)
-		if err != nil {
-			s.logger.Error(err.Error())
-			return "", "", err
-		}
-	} else if err != nil {
-		s.logger.Error(err.Error())
-		return "", "", err
-	}
-
-	refreshToken, err = s.tokenBuildRefresh(user.UUID)
-	if err != nil {
-		s.logger.Error(err.Error())
-		return "", "", err
-	}
-
-	accessToken, err = s.TokenBuildAccess(user.UUID)
-	if err != nil {
-		s.logger.Error(err.Error())
-		return "", "", err
-	}
-
-	return refreshToken, accessToken, nil
 }
 
 // FindByID implements the method to find a user model by primary key
@@ -268,7 +239,7 @@ func (s *AuthService) GoogleOauth2(code string) (refreshToken string, accessToke
 	if err != nil {
 		return "", "", err
 	}
-	userId := userInfoResponseJson["id"].(string)
+	googleId := userInfoResponseJson["id"].(string)
 
 	j, err = json.MarshalIndent(userInfoResponseJson, "", "\t")
 	if err != nil {
@@ -276,16 +247,37 @@ func (s *AuthService) GoogleOauth2(code string) (refreshToken string, accessToke
 	}
 	s.logger.Infof(string(j))
 
-	name := userInfoResponseJson["name"].(string)
 	email := userInfoResponseJson["email"].(string)
 
-	userModel := userModel.CreateUser{
-		Email:      email,
-		McUsername: name,
-		Credits:    0,
+	userModel := userModel.CreateUserGoogle{
+		GoogleId: googleId,
+		Email:    email,
 	}
-	refreshToken, accessToken, err = s.onSuccessfulOauth(userId, userModel)
+
+	// FIND USER IF EXISTS
+	user, err := s.userRepo.FindByID(googleId, "google_id")
+
+	if errors.Is(err, sql.ErrNoRows) {
+		// REGISTER USER IF DOES NOT EXIST
+		user, err = s.userRepo.CreateWithGoogle(userModel)
+		if err != nil {
+			s.logger.Error(err.Error())
+			return "", "", err
+		}
+	} else if err != nil {
+		s.logger.Error(err.Error())
+		return "", "", err
+	}
+
+	refreshToken, err = s.tokenBuildRefresh(user.UUID, "google_id")
 	if err != nil {
+		s.logger.Error(err.Error())
+		return "", "", err
+	}
+
+	accessToken, err = s.TokenBuildAccess(user.UUID, "google_id")
+	if err != nil {
+		s.logger.Error(err.Error())
 		return "", "", err
 	}
 
@@ -326,17 +318,51 @@ func (s *AuthService) MinecraftOauth2(code string) (refreshToken string, accessT
 		return "", "", err
 	}
 
-	uuid, name, err := s.microsoftMinecraftProfile(client, minecraftAccessToken)
+	uuid, _, err := s.microsoftMinecraftProfile(client, minecraftAccessToken)
 	if err != nil {
 		return "", "", err
 	}
 
-	userModel := userModel.CreateUser{
-		McUsername: name,
-		Credits:    0,
+	userModel := userModel.CreateUserMicrosoft{
+		UUID: uuid,
 	}
-	refreshToken, accessToken, err = s.onSuccessfulOauth(uuid, userModel)
+
+	// FIND USER IF EXISTS
+	user, err := s.userRepo.FindByID(uuid, "uuid")
+
+	if errors.Is(err, sql.ErrNoRows) {
+		// REGISTER USER IF DOES NOT EXIST
+		createPlayer := playerModel.CreatePlayer{
+			UUID: uuid,
+		}
+
+		err := s.playerRepo.CreateUUID(createPlayer)
+		if err != nil {
+			if !strings.Contains(err.Error(), "Error 1062: Duplicate entry") { // UUID is in goa_player but not in goa_player_web so lets skip to CreateWebData
+				s.logger.Error(err.Error())
+				return "", "", err
+			}
+		}
+
+		user, err = s.userRepo.CreateWithMicrosoft(userModel)
+		if err != nil {
+			s.logger.Error(err.Error())
+			return "", "", err
+		}
+	} else if err != nil {
+		s.logger.Error(err.Error())
+		return "", "", err
+	}
+
+	refreshToken, err = s.tokenBuildRefresh(user.UUID, "uuid")
 	if err != nil {
+		s.logger.Error(err.Error())
+		return "", "", err
+	}
+
+	accessToken, err = s.TokenBuildAccess(user.UUID, "uuid")
+	if err != nil {
+		s.logger.Error(err.Error())
 		return "", "", err
 	}
 

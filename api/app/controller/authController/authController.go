@@ -89,13 +89,13 @@ func (uc *AuthController) RefreshAccessToken(c *gin.Context) {
 		return
 	}
 
-	userUUID, err := uc.service.TokenValidateRefresh(token)
+	id, provider, err := uc.service.TokenValidateRefresh(token)
 	if err != nil {
 		appError.Respond(c, http.StatusBadRequest, err)
 		return
 	}
 
-	accessToken, err := uc.service.TokenBuildAccess(userUUID)
+	accessToken, err := uc.service.TokenBuildAccess(id, provider)
 	if err != nil {
 		appError.Respond(c, http.StatusInternalServerError, err)
 		return
@@ -120,13 +120,13 @@ func (uc *AuthController) Logout(c *gin.Context) {
 		return
 	}
 
-	userUUID, err := uc.service.TokenValidateRefresh(token)
+	id, _, err := uc.service.TokenValidateRefresh(token)
 	if err != nil {
 		appError.Respond(c, http.StatusUnauthorized, err)
 		return
 	}
 
-	err = uc.service.Logout(userUUID, token)
+	err = uc.service.Logout(id, token)
 	if err != nil {
 		appError.Respond(c, http.StatusInternalServerError, err)
 		return
@@ -152,14 +152,15 @@ func (uc *AuthController) AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		userUUID, err := uc.service.TokenValidate(token, os.Getenv("ACCESS_SECRET"))
+		id, id_field, err := uc.service.TokenValidate(token, os.Getenv("ACCESS_SECRET"))
 		if err != nil {
 			appError.Respond(c, http.StatusUnauthorized, err)
 			c.Abort()
 			return
 		}
 
-		c.Set("userUUID", userUUID)
+		c.Set("token_id", id)
+		c.Set("token_idField", id_field)
 		c.Next()
 		// after request
 	}

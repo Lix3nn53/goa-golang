@@ -48,48 +48,49 @@ func (mr *MockUserRepositoryInterfaceMockRecorder) AddSession(uuid, refreshToken
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddSession", reflect.TypeOf((*MockUserRepositoryInterface)(nil).AddSession), uuid, refreshToken)
 }
 
-// CreateUUID mocks base method.
-func (m *MockUserRepositoryInterface) CreateUUID(uuid string) error {
+// CreateWithGoogle mocks base method.
+func (m *MockUserRepositoryInterface) CreateWithGoogle(create userModel.CreateUserGoogle) (*userModel.User, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateUUID", uuid)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// CreateUUID indicates an expected call of CreateUUID.
-func (mr *MockUserRepositoryInterfaceMockRecorder) CreateUUID(uuid interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateUUID", reflect.TypeOf((*MockUserRepositoryInterface)(nil).CreateUUID), uuid)
-}
-
-// CreateWebData mocks base method.
-func (m *MockUserRepositoryInterface) CreateWebData(uuid string, create userModel.CreateUser) (*userModel.User, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateWebData", uuid, create)
+	ret := m.ctrl.Call(m, "CreateWithGoogle", create)
 	ret0, _ := ret[0].(*userModel.User)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// CreateWebData indicates an expected call of CreateWebData.
-func (mr *MockUserRepositoryInterfaceMockRecorder) CreateWebData(uuid, create interface{}) *gomock.Call {
+// CreateWithGoogle indicates an expected call of CreateWithGoogle.
+func (mr *MockUserRepositoryInterfaceMockRecorder) CreateWithGoogle(create interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateWebData", reflect.TypeOf((*MockUserRepositoryInterface)(nil).CreateWebData), uuid, create)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateWithGoogle", reflect.TypeOf((*MockUserRepositoryInterface)(nil).CreateWithGoogle), create)
+}
+
+// CreateWithMicrosoft mocks base method.
+func (m *MockUserRepositoryInterface) CreateWithMicrosoft(create userModel.CreateUserMicrosoft) (*userModel.User, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateWithMicrosoft", create)
+	ret0, _ := ret[0].(*userModel.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateWithMicrosoft indicates an expected call of CreateWithMicrosoft.
+func (mr *MockUserRepositoryInterfaceMockRecorder) CreateWithMicrosoft(create interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateWithMicrosoft", reflect.TypeOf((*MockUserRepositoryInterface)(nil).CreateWithMicrosoft), create)
 }
 
 // FindByID mocks base method.
-func (m *MockUserRepositoryInterface) FindByID(uuid string) (*userModel.User, error) {
+func (m *MockUserRepositoryInterface) FindByID(id, field string) (*userModel.User, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FindByID", uuid)
+	ret := m.ctrl.Call(m, "FindByID", id, field)
 	ret0, _ := ret[0].(*userModel.User)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // FindByID indicates an expected call of FindByID.
-func (mr *MockUserRepositoryInterfaceMockRecorder) FindByID(uuid interface{}) *gomock.Call {
+func (mr *MockUserRepositoryInterfaceMockRecorder) FindByID(id, field interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindByID", reflect.TypeOf((*MockUserRepositoryInterface)(nil).FindByID), uuid)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindByID", reflect.TypeOf((*MockUserRepositoryInterface)(nil).FindByID), id, field)
 }
 
 // GetSessions mocks base method.

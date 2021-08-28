@@ -38,7 +38,7 @@ func TestBillingController_Store(t *testing.T) {
 	billingController := NewBillingController(billUC, userUC, apiLogger)
 
 	t.Run("UserNotFound", func(t *testing.T) {
-		userUC.EXPECT().FindByID(1).Return(nil, appError.ErrNotFound)
+		userUC.EXPECT().FindByID(1, "uuid").Return(nil, appError.ErrNotFound)
 
 		router := gin.Default()
 		router.POST("/api/users/:id/paypal", billingController.AddCustomer)
@@ -88,20 +88,18 @@ func TestBillingController_Store2(t *testing.T) {
 	t.Run("InvalidIdentifyPayment", func(t *testing.T) {
 
 		userExpected := userModel.User{
-			UUID:       "1",
-			Email:      "a",
-			McUsername: "a",
-			Credits:    13,
+			UUID:    "1",
+			Email:   "a",
+			Credits: 13,
 		}
 
 		userRes := &userModel.User{
-			UUID:       userExpected.UUID,
-			Email:      userExpected.Email,
-			McUsername: userExpected.McUsername,
-			Credits:    userExpected.Credits,
+			UUID:    userExpected.UUID,
+			Email:   userExpected.Email,
+			Credits: userExpected.Credits,
 		}
 
-		userUC.EXPECT().FindByID(1).Return(userRes, nil)
+		userUC.EXPECT().FindByID(1, "uuid").Return(userRes, nil)
 
 		const badIdentify billingModel.Identify = "strbadIdentifyipe"
 
@@ -111,7 +109,6 @@ func TestBillingController_Store2(t *testing.T) {
 				Email: "11@test.com",
 				Desc:  "a 3rd test customer",
 				Card: &billingModel.CardParams{
-					Name: userRes.McUsername,
 					// TODO fix uuids to actual numbers
 					Number:   userRes.UUID,
 					ExpYear:  time.Now().Year() + 1,
@@ -156,13 +153,12 @@ func TestBillingController_Store3(t *testing.T) {
 
 	t.Run("Correct", func(t *testing.T) {
 		userRes := &userModel.User{
-			UUID:       "1",
-			Email:      "a",
-			McUsername: "a",
-			Credits:    14,
+			UUID:    "1",
+			Email:   "a",
+			Credits: 14,
 		}
 
-		userUC.EXPECT().FindByID(1).Return(userRes, nil)
+		userUC.EXPECT().FindByID(1, "uuid").Return(userRes, nil)
 
 		var customer = billingModel.CreateCustomer{
 			Identify: billingModel.AccountStripe,
@@ -170,7 +166,6 @@ func TestBillingController_Store3(t *testing.T) {
 				Email: "test3@test.com",
 				Desc:  "a 3rd test customer",
 				Card: &billingModel.CardParams{
-					Name:     userRes.McUsername,
 					Number:   userRes.UUID,
 					ExpYear:  time.Now().Year() + 1,
 					ExpMonth: 1,

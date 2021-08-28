@@ -16,10 +16,11 @@ type UserRepository struct {
 
 //UserRepositoryInterface define the user repository interface methods
 type UserRepositoryInterface interface {
-	FindByID(uuid string) (user *userModel.User, err error)
+	FindByID(id string, field string) (user *userModel.User, err error)
 	RemoveByID(uuid string) error
 	UpdateByID(uuid string, user userModel.UpdateUser) error
-	CreateWebData(uuid string, create userModel.CreateUser) (user *userModel.User, err error)
+	CreateWithMicrosoft(create userModel.CreateUserMicrosoft) (user *userModel.User, err error)
+	CreateWithGoogle(create userModel.CreateUserGoogle) (user *userModel.User, err error)
 	GetSessions(uuid string) (sessions string, err error)
 	AddSession(uuid string, refreshToken string) error
 	RemoveSession(uuid string, refreshToken string) error
@@ -33,13 +34,27 @@ func NewUserRepository(db *storage.DbStore) UserRepositoryInterface {
 }
 
 // FindByID implements the method to find a user from the store
-func (r *UserRepository) FindByID(uuid string) (user *userModel.User, err error) {
+func (r *UserRepository) FindByID(id string, field string) (user *userModel.User, err error) {
 	user = &userModel.User{}
 
-	var query = "SELECT uuid, email, mc_username, credits FROM goa_player_web WHERE uuid = ?"
-	row := r.db.QueryRow(query, uuid)
+	var query = "SELECT uuid, email, credits FROM goa_player_web WHERE ? = ?"
+	row := r.db.QueryRow(query, field, id)
 
-	if err := row.Scan(&user.UUID, &user.Email, &user.McUsername, &user.Credits); err != nil {
+	if err := row.Scan(&user.UUID, &user.Email, &user.Credits); err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
+// FindByGoogle implements the method to find a user from the store
+func (r *UserRepository) FindByGoogle(googleId string) (user *userModel.User, err error) {
+	user = &userModel.User{}
+
+	var query = "SELECT uuid, email, credits FROM goa_player_web WHERE google_id = ?"
+	row := r.db.QueryRow(query, googleId)
+
+	if err := row.Scan(&user.UUID, &user.Email, &user.Credits); err != nil {
 		return nil, err
 	}
 
@@ -55,7 +70,7 @@ func (r *UserRepository) RemoveByID(uuid string) error {
 
 // UpdateByID implements the method to update a user into the store
 func (r *UserRepository) UpdateByID(uuid string, user userModel.UpdateUser) error {
-	result, err := r.db.Exec("UPDATE goa_player_web SET email = ?, mc_username = ?, credits = ? where uuid = ?", user.Email, user.McUsername, user.Credits, uuid)
+	result, err := r.db.Exec("UPDATE goa_player_web SET email = ?, credits = ? where uuid = ?", user.Email, user.Credits, uuid)
 	if err != nil {
 		return err
 	}
@@ -73,9 +88,8 @@ func (r *UserRepository) UpdateByID(uuid string, user userModel.UpdateUser) erro
 }
 
 // Create implements the method to persist a new user
-func (r *UserRepository) CreateWebData(uuid string, UserSignUp userModel.CreateUser) (user *userModel.User, err error) {
-	createUserQuery := `INSERT INTO goa_player_web (uuid, email, mc_username, credits) 
-		VALUES (?, ?, ?, ?)`
+func (r *UserRepository) CreateWithMicrosoft(UserSignUp userModel.CreateUserMicrosoft) (user *userModel.User, err error) {
+	createUserQuery := `INSERT INTO goa_player_web (uuid) VALUES (?)`
 
 	stmt, err := r.db.Prepare(createUserQuery)
 	if err != nil {
@@ -83,7 +97,7 @@ func (r *UserRepository) CreateWebData(uuid string, UserSignUp userModel.CreateU
 	}
 	defer stmt.Close()
 
-	result, err := stmt.Exec(uuid, UserSignUp.Email, UserSignUp.McUsername, UserSignUp.Credits)
+	result, err := stmt.Exec(UserSignUp.UUID)
 	if err != nil {
 		return nil, err
 	}
@@ -98,10 +112,38 @@ func (r *UserRepository) CreateWebData(uuid string, UserSignUp userModel.CreateU
 	}
 
 	return &userModel.User{
-		UUID:       uuid,
-		Email:      UserSignUp.Email,
-		McUsername: UserSignUp.McUsername,
-		Credits:    UserSignUp.Credits,
+		UUID:    UserSignUp.UUID,
+		Credits: 0,
+	}, nil
+}
+
+// Create implements the method to persist a new user
+func (r *UserRepository) CreateWithGoogle(UserSignUp userModel.CreateUserGoogle) (user *userModel.User, err error) {
+	createUserQuery := `INSERT INTO goa_player_web (google_id, email) VALUES (?, ?)`
+
+	stmt, err := r.db.Prepare(createUserQuery)
+	if err != nil {
+		return nil, err
+	}
+	defer stmt.Close()
+
+	result, err := stmt.Exec(UserSignUp.GoogleId, UserSignUp.Email)
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return nil, err
+	}
+	n := int(rows) // truncated on machines with 32-bit ints
+	if n == 0 {
+		return nil, appError.ErrNotFound
+	}
+
+	return &userModel.User{
+		Email:   UserSignUp.Email,
+		Credits: 0,
 	}, nil
 }
 

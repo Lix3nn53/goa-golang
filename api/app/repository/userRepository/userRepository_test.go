@@ -49,25 +49,23 @@ func TestUserRepository_FindByID(t *testing.T) {
 
 	userPGRepository := NewUserRepository(&storage.DbStore{DB: sqlxDB})
 
-	columns := []string{"uuid", "email", "mc_username", "credits"}
+	columns := []string{"uuid", "email", "credits"}
 	userID := string("1")
 	mockUser := &userModel.User{
-		UUID:       userID,
-		Email:      "FirstName",
-		McUsername: "email@gmail.com",
-		Credits:    6,
+		UUID:    userID,
+		Email:   "FirstName",
+		Credits: 6,
 	}
 
 	rows := sqlmock.NewRows(columns).AddRow(
 		mockUser.UUID,
 		mockUser.Email,
-		mockUser.McUsername,
 		mockUser.Credits,
 	)
 
-	mock.ExpectQuery("SELECT uuid, email, mc_username, credits FROM goa_player_web WHERE id = ?").WithArgs(userID).WillReturnRows(rows)
+	mock.ExpectQuery("SELECT uuid, email, credits FROM goa_player_web WHERE id = ?").WithArgs(userID).WillReturnRows(rows)
 
-	foundUser, err := userPGRepository.FindByID(mockUser.UUID)
+	foundUser, err := userPGRepository.FindByID(mockUser.UUID, "uuid")
 
 	require.NoError(t, err)
 	require.NotNil(t, foundUser)
@@ -84,25 +82,23 @@ func TestUserRepository_FindByID_IncorrectID(t *testing.T) {
 
 	userPGRepository := NewUserRepository(&storage.DbStore{DB: sqlxDB})
 
-	columns := []string{"uuid", "email", "mc_username", "credits"}
+	columns := []string{"uuid", "email", "credits"}
 	userID := string("1")
 	mockUser := &userModel.User{
-		UUID:       userID,
-		Email:      "email@gmail.com",
-		McUsername: "FirstName",
-		Credits:    12,
+		UUID:    userID,
+		Email:   "email@gmail.com",
+		Credits: 12,
 	}
 
 	rows := sqlmock.NewRows(columns).AddRow(
 		userID,
 		mockUser.Email,
-		mockUser.McUsername,
 		mockUser.Credits,
 	)
 
-	mock.ExpectQuery("SELECT uuid, email, mc_username, credits FROM goa_player_web WHERE id = ?").WithArgs(2).WillReturnRows(rows)
+	mock.ExpectQuery("SELECT uuid, email, credits FROM goa_player_web WHERE id = ?").WithArgs(2).WillReturnRows(rows)
 
-	foundUser, err := userPGRepository.FindByID(mockUser.UUID)
+	foundUser, err := userPGRepository.FindByID(mockUser.UUID, "uuid")
 
 	require.Error(t, err)
 	require.Nil(t, foundUser)
@@ -119,16 +115,14 @@ func TestUserRepository_Create(t *testing.T) {
 	userPGRepository := NewUserRepository(&storage.DbStore{DB: sqlxDB})
 
 	userID := string("1")
-	mockUser := userModel.CreateUser{
-		Email:      "LastName",
-		McUsername: "FirstName",
-		Credits:    3,
+	mockUser := userModel.CreateUserMicrosoft{
+		UUID: userID,
 	}
 
-	ep := mock.ExpectPrepare("INSERT INTO goa_player_web (uuid, email, mc_username, credits) VALUES (?, ?, ?, ?)").WillBeClosed()
-	ep.ExpectQuery().WithArgs(userID, mockUser.Email, mockUser.McUsername, mockUser.Credits).WillReturnRows(sqlmock.NewRows([]string{"uuid"}).AddRow(userID))
+	ep := mock.ExpectPrepare("INSERT INTO goa_player_web (uuid) VALUES (?)").WillBeClosed()
+	ep.ExpectQuery().WithArgs(userID).WillReturnRows(sqlmock.NewRows([]string{"uuid"}).AddRow(userID))
 
-	foundUser, err := userPGRepository.CreateWebData(userID, mockUser)
+	foundUser, err := userPGRepository.CreateWithMicrosoft(mockUser)
 	require.NoError(t, err)
 	require.NotNil(t, foundUser)
 	require.Equal(t, foundUser.UUID, userID)

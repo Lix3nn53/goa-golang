@@ -38,7 +38,7 @@ func (bc *BillingController) AddCustomer(c *gin.Context) {
 
 	id := c.Param("id")
 
-	user, err := bc.uservice.FindByID(id)
+	user, err := bc.uservice.FindByID(id, "uuid")
 	if err != nil {
 		bc.logger.Error(err.Error())
 		appError.Respond(c, http.StatusNotFound, err)

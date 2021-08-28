@@ -1,15 +1,14 @@
 -- +goose Up
 -- +goose StatementBegin
 CREATE TABLE IF NOT EXISTS `goa_player_web` (
-     `uuid`        varchar(40) NOT NULL ,
-     `email`       varchar(45) NULL ,
-     `mc_username` varchar(20) NOT NULL ,
-     `credits`     smallint NOT NULL ,
+     `uuid`        varchar(40) NULL ,
+     `google_id`      varchar(40) NULL UNIQUE,
+     `email`       varchar(45) NULL UNIQUE,
+     `credits`     smallint DEFAULT 0,
      `sessions`    text NULL ,
 
-     PRIMARY KEY (`uuid`),
-     KEY `fkIdx_38_clone` (`uuid`),
-     CONSTRAINT `FK_38_clone` FOREIGN KEY `fkIdx_38_clone` (`uuid`) REFERENCES `goa_player` (`uuid`)
+     KEY `fkIdx_188` (`uuid`),
+     CONSTRAINT `FK_187` FOREIGN KEY `fkIdx_188` (`uuid`) REFERENCES `goa_player` (`uuid`)
 );
 -- +goose StatementEnd
 

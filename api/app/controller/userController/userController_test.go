@@ -28,20 +28,16 @@ func TestMicroservice_Find(t *testing.T) {
 
 	userController := NewUserController(userUC, apiLogger)
 
-	reqValue := &userModel.CreateUser{
-		Email:      "email@gmail.com",
-		McUsername: "es",
-		Credits:    5,
+	reqValue := &userModel.CreateUserMicrosoft{
+		UUID: "1",
 	}
 
 	t.Run("Correct", func(t *testing.T) {
 		userRes := &userModel.User{
-			Email:      reqValue.Email,
-			McUsername: reqValue.McUsername,
-			Credits:    reqValue.Credits,
+			UUID: reqValue.UUID,
 		}
 
-		userUC.EXPECT().FindByID(1).Return(userRes, nil)
+		userUC.EXPECT().FindByID(1, "uuid").Return(userRes, nil)
 
 		router := gin.Default()
 		router.GET("/api/users/:id", userController.Info)
@@ -56,7 +52,7 @@ func TestMicroservice_Find(t *testing.T) {
 	})
 
 	t.Run("Incorrect", func(t *testing.T) {
-		userUC.EXPECT().FindByID(2).Return(nil, appError.ErrNotFound)
+		userUC.EXPECT().FindByID(2, "uuid").Return(nil, appError.ErrNotFound)
 
 		router := gin.Default()
 		router.GET("/api/users/:id", userController.Info)

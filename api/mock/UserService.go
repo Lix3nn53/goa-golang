@@ -35,59 +35,16 @@ func (m *MockUserServiceInterface) EXPECT() *MockUserServiceInterfaceMockRecorde
 }
 
 // FindByID mocks base method.
-func (m *MockUserServiceInterface) FindByID(uuid string) (*userModel.User, error) {
+func (m *MockUserServiceInterface) FindByID(id, field string) (*userModel.User, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FindByID", uuid)
+	ret := m.ctrl.Call(m, "FindByID", id, field)
 	ret0, _ := ret[0].(*userModel.User)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // FindByID indicates an expected call of FindByID.
-func (mr *MockUserServiceInterfaceMockRecorder) FindByID(uuid interface{}) *gomock.Call {
+func (mr *MockUserServiceInterfaceMockRecorder) FindByID(id, field interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindByID", reflect.TypeOf((*MockUserServiceInterface)(nil).FindByID), uuid)
-}
-
-// RemoveByID mocks base method.
-func (m *MockUserServiceInterface) RemoveByID(uuid string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RemoveByID", uuid)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// RemoveByID indicates an expected call of RemoveByID.
-func (mr *MockUserServiceInterfaceMockRecorder) RemoveByID(uuid interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveByID", reflect.TypeOf((*MockUserServiceInterface)(nil).RemoveByID), uuid)
-}
-
-// Store mocks base method.
-func (m *MockUserServiceInterface) Store(uuid string, user userModel.CreateUser) (*userModel.User, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Store", uuid, user)
-	ret0, _ := ret[0].(*userModel.User)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// Store indicates an expected call of Store.
-func (mr *MockUserServiceInterfaceMockRecorder) Store(uuid, user interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Store", reflect.TypeOf((*MockUserServiceInterface)(nil).Store), uuid, user)
-}
-
-// UpdateByID mocks base method.
-func (m *MockUserServiceInterface) UpdateByID(uuid string, user userModel.UpdateUser) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateByID", uuid, user)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// UpdateByID indicates an expected call of UpdateByID.
-func (mr *MockUserServiceInterfaceMockRecorder) UpdateByID(uuid, user interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateByID", reflect.TypeOf((*MockUserServiceInterface)(nil).UpdateByID), uuid, user)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindByID", reflect.TypeOf((*MockUserServiceInterface)(nil).FindByID), id, field)
 }

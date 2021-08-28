@@ -31,16 +31,27 @@ func NewPlayerController(service playerService.PlayerServiceInterface, logger lo
 
 // Find implements the method to handle the service to find a player by the primary key
 func (uc *PlayerController) Info(c *gin.Context) {
-	userUUID, exists := c.Get("userUUID")
-
+	tokenId, exists := c.Get("token_id")
 	if !exists {
-		appError.Respond(c, http.StatusForbidden, errors.New("no userUUID"))
+		appError.Respond(c, http.StatusForbidden, errors.New("no id"))
 		return
 	}
 
-	uuid := userUUID.(string)
+	tokenIdField, exists := c.Get("token_idField")
+	if !exists {
+		appError.Respond(c, http.StatusForbidden, errors.New("no idField"))
+		return
+	}
 
-	player, err := uc.service.FindByID(uuid)
+	id := tokenId.(string)
+	idField := tokenIdField.(string)
+
+	if idField != "uuid" {
+		appError.Respond(c, http.StatusForbidden, errors.New("not implemented"))
+		return
+	}
+
+	player, err := uc.service.FindByID(id)
 	if err != nil {
 		uc.logger.Error(err.Error())
 		appError.Respond(c, http.StatusNotFound, err)

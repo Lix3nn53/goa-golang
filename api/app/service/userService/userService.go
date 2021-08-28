@@ -7,7 +7,7 @@ import (
 
 //UserServiceInterface define the user service interface methods
 type UserServiceInterface interface {
-	FindByID(uuid string) (user *userModel.User, err error)
+	FindByID(id string, field string) (user *userModel.User, err error)
 }
 
 // billingService handles communication with the user repository
@@ -23,6 +23,6 @@ func NewUserService(userRepo userRepository.UserRepositoryInterface) UserService
 }
 
 // FindByID implements the method to find a user model by primary key
-func (s *UserService) FindByID(uuid string) (user *userModel.User, err error) {
-	return s.userRepo.FindByID(uuid)
+func (s *UserService) FindByID(id string, field string) (user *userModel.User, err error) {
+	return s.userRepo.FindByID(id, field)
 }

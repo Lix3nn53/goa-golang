@@ -52,10 +52,9 @@ func TestBillingService_AddBilling(t *testing.T) {
 	t.Run("InvalidPayment", func(t *testing.T) {
 		t.Parallel()
 		user := userModel.User{
-			UUID:       "1",
-			Email:      "1",
-			McUsername: "1",
-			Credits:    9,
+			UUID:    "1",
+			Email:   "1",
+			Credits: 9,
 		}
 
 		p := billingModel.Payment{
@@ -64,7 +63,6 @@ func TestBillingService_AddBilling(t *testing.T) {
 				Email: "test3@test.com",
 				Desc:  "a 3rd test customer",
 				Card: &billingModel.CardParams{
-					Name:     user.McUsername,
 					Number:   user.UUID,
 					ExpYear:  time.Now().Year() + 1,
 					ExpMonth: 1,
@@ -94,10 +92,9 @@ func TestBillingService_GetPaymentAdapter(t *testing.T) {
 	t.Run("InvalidPayment", func(t *testing.T) {
 		t.Parallel()
 		user := userModel.User{
-			UUID:       "1",
-			McUsername: "1",
-			Email:      "1",
-			Credits:    11,
+			UUID:    "1",
+			Email:   "1",
+			Credits: 11,
 		}
 
 		p := billingModel.CreateCustomer{
@@ -106,7 +103,6 @@ func TestBillingService_GetPaymentAdapter(t *testing.T) {
 				Email: "test3@test.com",
 				Desc:  "a 3rd test customer",
 				Card: &billingModel.CardParams{
-					Name:     user.McUsername,
 					Number:   user.UUID,
 					ExpYear:  time.Now().Year() + 1,
 					ExpMonth: 1,
@@ -134,10 +130,9 @@ func TestBillingService_GetPaymentAdapter2(t *testing.T) {
 	t.Run("InvalidPayment", func(t *testing.T) {
 		t.Parallel()
 		user := userModel.User{
-			UUID:       "1",
-			Email:      "1",
-			McUsername: "1",
-			Credits:    12,
+			UUID:    "1",
+			Email:   "1",
+			Credits: 12,
 		}
 
 		p := billingModel.CreateCustomer{
@@ -146,7 +141,6 @@ func TestBillingService_GetPaymentAdapter2(t *testing.T) {
 				Email: "test3@test.com",
 				Desc:  "a 3rd test customer",
 				Card: &billingModel.CardParams{
-					Name:     user.McUsername,
 					Number:   user.UUID,
 					ExpYear:  time.Now().Year() + 1,
 					ExpMonth: 1,
