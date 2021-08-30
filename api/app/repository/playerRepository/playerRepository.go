@@ -1,7 +1,6 @@
 package playerRepository
 
 import (
-	"database/sql"
 	appError "goa-golang/app/error"
 	"goa-golang/app/model/playerModel"
 	"goa-golang/internal/storage"
@@ -31,37 +30,18 @@ func (r *PlayerRepository) FindByID(uuid string) (player *playerModel.Player, er
 	var query = "SELECT daily_last_date, staff_rank, premium_rank, premium_rank_date FROM goa_player WHERE uuid = ?"
 	row := r.db.QueryRow(query, uuid)
 
-	var read1 sql.NullString
-	var read2 sql.NullString
-	var read3 sql.NullString
-	var read4 sql.NullString
-	if err := row.Scan(&read1, &read2, &read3, &read4); err != nil {
-		return nil, err
-	}
+	scan := &playerModel.PlayerScan{}
 
-	var dailyLastDate string
-	if read1.Valid {
-		dailyLastDate = read1.String
-	}
-	var staffRank string
-	if read2.Valid {
-		staffRank = read2.String
-	}
-	var premiumRank string
-	if read3.Valid {
-		premiumRank = read3.String
-	}
-	var premiumRankDate string
-	if read4.Valid {
-		premiumRankDate = read4.String
+	if err := row.Scan(&scan.DailyLastDate, &scan.StaffRank, &scan.PremiumRank, &scan.PremiumRankDate); err != nil {
+		return nil, err
 	}
 
 	player = &playerModel.Player{
 		UUID:            uuid,
-		DailyLastDate:   dailyLastDate,
-		StaffRank:       staffRank,
-		PremiumRank:     premiumRank,
-		PremiumRankDate: premiumRankDate,
+		DailyLastDate:   scan.DailyLastDate.String,
+		StaffRank:       scan.StaffRank.String,
+		PremiumRank:     scan.PremiumRank.String,
+		PremiumRankDate: scan.PremiumRankDate.String,
 	}
 
 	return player, nil

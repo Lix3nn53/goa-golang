@@ -18,12 +18,12 @@ type UserRepository struct {
 type UserRepositoryInterface interface {
 	FindByID(id string, field string) (user *userModel.User, err error)
 	RemoveByID(uuid string) error
-	UpdateByID(uuid string, user userModel.UpdateUser) error
+	UpdateByID(id string, field string, user userModel.UpdateUser) error
 	CreateWithMicrosoft(create userModel.CreateUserMicrosoft) (user *userModel.User, err error)
 	CreateWithGoogle(create userModel.CreateUserGoogle) (user *userModel.User, err error)
-	GetSessions(uuid string) (sessions string, err error)
-	AddSession(uuid string, refreshToken string) error
-	RemoveSession(uuid string, refreshToken string) error
+	GetSessions(id string, field string) (sessions sql.NullString)
+	AddSession(id string, field string, refreshToken string) error
+	RemoveSession(id string, field string, refreshToken string) error
 }
 
 // NewUserRepository implements the user repository interface.
@@ -35,27 +35,21 @@ func NewUserRepository(db *storage.DbStore) UserRepositoryInterface {
 
 // FindByID implements the method to find a user from the store
 func (r *UserRepository) FindByID(id string, field string) (user *userModel.User, err error) {
-	user = &userModel.User{}
+	var query = "SELECT uuid, google_id, discord_id, email, credits FROM goa_player_web WHERE " + field + " = ?"
+	row := r.db.QueryRow(query, id)
 
-	var query = "SELECT uuid, email, credits FROM goa_player_web WHERE ? = ?"
-	row := r.db.QueryRow(query, field, id)
+	scan := &userModel.UserScan{}
 
-	if err := row.Scan(&user.UUID, &user.Email, &user.Credits); err != nil {
+	if err := row.Scan(&scan.UUID, &scan.GoogleId, &scan.DiscordId, &scan.Email, &scan.Credits); err != nil {
 		return nil, err
 	}
 
-	return user, nil
-}
-
-// FindByGoogle implements the method to find a user from the store
-func (r *UserRepository) FindByGoogle(googleId string) (user *userModel.User, err error) {
-	user = &userModel.User{}
-
-	var query = "SELECT uuid, email, credits FROM goa_player_web WHERE google_id = ?"
-	row := r.db.QueryRow(query, googleId)
-
-	if err := row.Scan(&user.UUID, &user.Email, &user.Credits); err != nil {
-		return nil, err
+	user = &userModel.User{
+		UUID:      scan.UUID.String,
+		GoogleId:  scan.GoogleId.String,
+		DiscordId: scan.DiscordId.String,
+		Email:     scan.Email.String,
+		Credits:   int(scan.Credits.Int16),
 	}
 
 	return user, nil
@@ -69,8 +63,8 @@ func (r *UserRepository) RemoveByID(uuid string) error {
 }
 
 // UpdateByID implements the method to update a user into the store
-func (r *UserRepository) UpdateByID(uuid string, user userModel.UpdateUser) error {
-	result, err := r.db.Exec("UPDATE goa_player_web SET email = ?, credits = ? where uuid = ?", user.Email, user.Credits, uuid)
+func (r *UserRepository) UpdateByID(id string, field string, user userModel.UpdateUser) error {
+	result, err := r.db.Exec("UPDATE goa_player_web SET email = ?, credits = ? where "+field+" = ?", user.Email, user.Credits, id)
 	if err != nil {
 		return err
 	}
@@ -142,36 +136,35 @@ func (r *UserRepository) CreateWithGoogle(UserSignUp userModel.CreateUserGoogle)
 	}
 
 	return &userModel.User{
-		Email:   UserSignUp.Email,
-		Credits: 0,
+		GoogleId: UserSignUp.GoogleId,
+		Email:    UserSignUp.Email,
+		Credits:  0,
 	}, nil
 }
 
 // FindByID implements the method to find a user from the store
-func (r *UserRepository) GetSessions(uuid string) (sessions string, err error) {
-	var query = "SELECT sessions FROM goa_player_web WHERE uuid = ?"
-	row := r.db.QueryRow(query, uuid)
+func (r *UserRepository) GetSessions(id string, field string) (sessions sql.NullString) {
+	var query = "SELECT sessions FROM goa_player_web WHERE " + field + " = ?"
+	row := r.db.QueryRow(query, id)
 
-	var sessionsScan sql.NullString
-	if err := row.Scan(&sessionsScan); err != nil {
-		return "", err
-	}
-	if !sessionsScan.Valid {
-		return "", errors.New("sql string is not valid")
+	var scan sql.NullString
+
+	if err := row.Scan(&scan); err != nil {
+		return sql.NullString{Valid: false}
 	}
 
-	return sessionsScan.String, nil
+	return scan
 }
 
-func (r *UserRepository) AddSession(uuid string, refreshToken string) error {
-	sessions, err := r.GetSessions(uuid)
-	if err != nil {
-		return err
+func (r *UserRepository) AddSession(id string, field string, refreshToken string) error {
+	sessionsStr := refreshToken
+
+	sessions := r.GetSessions(id, field)
+	if sessions.Valid {
+		sessionsStr = sessions.String + "/" + refreshToken
 	}
 
-	sessions = sessions + "/" + refreshToken
-
-	result, err := r.db.Exec("UPDATE goa_player_web SET sessions = ? where uuid = ?", sessions, uuid)
+	result, err := r.db.Exec("UPDATE goa_player_web SET sessions = ? where "+field+" = ?", sessionsStr, id)
 	if err != nil {
 		return err
 	}
@@ -188,15 +181,15 @@ func (r *UserRepository) AddSession(uuid string, refreshToken string) error {
 	return nil
 }
 
-func (r *UserRepository) RemoveSession(uuid string, refreshToken string) error {
-	sessions, err := r.GetSessions(uuid)
-	if err != nil {
-		return err
+func (r *UserRepository) RemoveSession(id string, field string, refreshToken string) error {
+	sessions := r.GetSessions(id, field)
+	if !sessions.Valid {
+		return errors.New("sessions is not valid")
 	}
 
-	sessions = strings.Replace(sessions, "/"+refreshToken, "", -1)
+	sessionsStr := strings.Replace(sessions.String, "/"+refreshToken, "", -1)
 
-	result, err := r.db.Exec("UPDATE goa_player_web SET sessions = ? where uuid = ?", sessions, uuid)
+	result, err := r.db.Exec("UPDATE goa_player_web SET sessions = ? where "+field+" = ?", sessionsStr, id)
 	if err != nil {
 		return err
 	}

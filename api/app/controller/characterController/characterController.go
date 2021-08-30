@@ -31,13 +31,13 @@ func NewCharacterController(service characterService.CharacterServiceInterface, 
 
 // Find implements the method to handle the service to find a character by the primary key
 func (uc *CharacterController) Info(c *gin.Context) {
-	tokenId, exists := c.Get("token_id")
+	tokenId, exists := c.Get("tokenID")
 	if !exists {
 		appError.Respond(c, http.StatusForbidden, errors.New("no id"))
 		return
 	}
 
-	tokenIdField, exists := c.Get("token_idField")
+	tokenIdField, exists := c.Get("tokenIDField")
 	if !exists {
 		appError.Respond(c, http.StatusForbidden, errors.New("no idField"))
 		return

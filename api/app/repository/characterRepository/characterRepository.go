@@ -1,7 +1,6 @@
 package characterRepository
 
 import (
-	"database/sql"
 	"goa-golang/app/model/characterModel"
 	"goa-golang/internal/storage"
 )
@@ -35,60 +34,22 @@ func (r *CharacterRepository) FindByID(uuid string) (characters []*characterMode
 
 	characters = make([]*characterModel.Character, 0)
 	for rows.Next() {
-		var read1 sql.NullString
-		var read2 sql.NullString
-		var read3 sql.NullString
-		var read4 sql.NullString
-		var read5 sql.NullString
-		var read6 sql.NullString
-		var read7 sql.NullString
-		var read8 sql.NullString
-		if err := rows.Scan(&read1, &read2, &read3, &read4, &read5, &read6, &read7, &read8); err != nil {
+		scan := &characterModel.CharacterScan{}
+
+		if err := rows.Scan(&scan.CharacterNo, &scan.ChatTag, &scan.CraftingExperiences, &scan.TurnedInQuests, &scan.ActiveQuests,
+			&scan.RpgClass, &scan.UnlockedClasses, &scan.TotalExp); err != nil {
 			return nil, err
 		}
 
-		var characterNo string
-		if read1.Valid {
-			characterNo = read1.String
-		}
-		var chatTag string
-		if read2.Valid {
-			chatTag = read2.String
-		}
-		var craftingExperiences string
-		if read3.Valid {
-			craftingExperiences = read3.String
-		}
-		var turnedInQuests string
-		if read4.Valid {
-			turnedInQuests = read4.String
-		}
-		var activeQuests string
-		if read1.Valid {
-			activeQuests = read5.String
-		}
-		var rpgClass string
-		if read2.Valid {
-			rpgClass = read6.String
-		}
-		var unlockedClasses string
-		if read3.Valid {
-			unlockedClasses = read7.String
-		}
-		var totalExp string
-		if read4.Valid {
-			totalExp = read8.String
-		}
-
 		character := &characterModel.Character{
-			CharacterNo:         characterNo,
-			ChatTag:             chatTag,
-			CraftingExperiences: craftingExperiences,
-			TurnedInQuests:      turnedInQuests,
-			ActiveQuests:        activeQuests,
-			RpgClass:            rpgClass,
-			UnlockedClasses:     unlockedClasses,
-			TotalExp:            totalExp,
+			CharacterNo:         scan.CharacterNo.String,
+			ChatTag:             scan.ChatTag.String,
+			CraftingExperiences: scan.CraftingExperiences.String,
+			TurnedInQuests:      scan.TurnedInQuests.String,
+			ActiveQuests:        scan.ActiveQuests.String,
+			RpgClass:            scan.RpgClass.String,
+			UnlockedClasses:     scan.UnlockedClasses.String,
+			TotalExp:            scan.TotalExp.String,
 		}
 
 		characters = append(characters, character)

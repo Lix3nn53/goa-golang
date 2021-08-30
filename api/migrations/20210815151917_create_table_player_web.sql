@@ -3,6 +3,7 @@
 CREATE TABLE IF NOT EXISTS `goa_player_web` (
      `uuid`        varchar(40) NULL ,
      `google_id`      varchar(40) NULL UNIQUE,
+     `discord_id`      varchar(40) NULL UNIQUE,
      `email`       varchar(45) NULL UNIQUE,
      `credits`     smallint DEFAULT 0,
      `sessions`    text NULL ,

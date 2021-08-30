@@ -24,17 +24,17 @@ import (
 )
 
 type MyCustomClaims struct {
-	IssuerField string `json:"issuer_field"`
+	IssuerField string `json:"iss_field,omitempty"`
 	jwt.StandardClaims
 }
 
 //UserServiceInterface define the user service interface methods
 type AuthServiceInterface interface {
-	TokenBuildAccess(id string, id_field string) (tokenString string, err error)
-	tokenBuildRefresh(id string, id_field string) (tokenString string, err error)
-	TokenValidate(tokenString string, secret string) (id string, id_field string, err error)
-	TokenValidateRefresh(tokenString string) (id string, id_field string, err error)
-	Logout(uuid string, refreshToken string) error
+	TokenBuildAccess(id string, idField string) (tokenString string, err error)
+	tokenBuildRefresh(id string, idField string) (tokenString string, err error)
+	TokenValidate(tokenString string, secret string) (id string, idField string, err error)
+	TokenValidateRefresh(tokenString string) (id string, idField string, err error)
+	Logout(id string, idField string, refreshToken string) error
 	GoogleOauth2(code string) (refreshToken string, accessToken string, err error)
 	MinecraftOauth2(code string) (refreshToken string, accessToken string, err error)
 }
@@ -58,15 +58,14 @@ func NewAuthService(playerRepo playerRepository.PlayerRepositoryInterface,
 }
 
 // FindByID implements the method to find a user model by primary key
-func (s *AuthService) TokenBuildAccess(id string, id_field string) (tokenString string, err error) {
+func (s *AuthService) TokenBuildAccess(id string, idField string) (tokenString string, err error) {
 	// Create a new token object, specifying signing method and the claims
 	// you would like it to contain.
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, MyCustomClaims{
-		id_field,
+		idField,
 		jwt.StandardClaims{
 			Issuer:    id,
-			Subject:   id_field,
 			ExpiresAt: time.Now().Add(time.Duration(1) * time.Minute).Unix(),
 		},
 	})
@@ -82,14 +81,13 @@ func (s *AuthService) TokenBuildAccess(id string, id_field string) (tokenString 
 }
 
 // FindByID implements the method to find a user model by primary key
-func (s *AuthService) tokenBuildRefresh(id string, id_field string) (tokenString string, err error) {
+func (s *AuthService) tokenBuildRefresh(id string, idField string) (tokenString string, err error) {
 	// Create a new token object, specifying signing method and the claims
 	// you would like it to contain.
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, MyCustomClaims{
-		id_field,
+		idField,
 		jwt.StandardClaims{
 			Issuer:    id,
-			Subject:   id_field,
 			ExpiresAt: time.Now().AddDate(0, 1, 0).Unix(),
 		},
 	})
@@ -101,23 +99,24 @@ func (s *AuthService) tokenBuildRefresh(id string, id_field string) (tokenString
 		return "", err
 	}
 
-	err = s.userRepo.AddSession(id, tokenString)
+	err = s.userRepo.AddSession(id, idField, tokenString)
 	if err != nil {
+		s.logger.Error(err.Error())
 		return "", err
 	}
 
 	return tokenString, nil
 }
 
-// FindByID implements the method to find a user model by primary key
-func (s *AuthService) TokenValidate(tokenString string, secret string) (id string, id_field string, err error) {
+func (s *AuthService) TokenValidate(tokenString string, secret string) (id string, idField string, err error) {
 	// Parse takes the token string and a function for looking up the key. The latter is especially
 	// useful if you use multiple keys for your application.  The standard is to use 'kid' in the
 	// head of the token to identify which key to use, but the parsed token (head and claims) is provided
 	// to the callback, providing flexibility.
-	token, err := jwt.ParseWithClaims(tokenString, &jwt.StandardClaims{}, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &MyCustomClaims{}, func(token *jwt.Token) (interface{}, error) {
 		// Don't forget to validate the alg is what you expect:
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			s.logger.Errorf("unexpected signing method: %v", token.Header["alg"])
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
 
@@ -125,28 +124,35 @@ func (s *AuthService) TokenValidate(tokenString string, secret string) (id strin
 		hmacSampleSecret := []byte(secret)
 		return hmacSampleSecret, nil
 	})
+	if err != nil {
+		return "", "", err
+	}
+
+	s.logger.Info("TESTTTTT")
 
 	if claims, ok := token.Claims.(*MyCustomClaims); ok && token.Valid {
 
+		s.logger.Info("claims: %s", claims)
+
 		return claims.Issuer, claims.IssuerField, nil
 	} else {
-		return "", "", err
+		s.logger.Info("claims: %s", claims)
+		return "", "", errors.New("token is not valid")
 	}
 }
 
-// FindByID implements the method to find a user model by primary key
-func (s *AuthService) TokenValidateRefresh(tokenString string) (id string, id_field string, err error) {
-	id, id_field, err = s.TokenValidate(tokenString, os.Getenv("REFRESH_SECRET"))
+func (s *AuthService) TokenValidateRefresh(tokenString string) (id string, idField string, err error) {
+	id, idField, err = s.TokenValidate(tokenString, os.Getenv("REFRESH_SECRET"))
 	if err != nil {
 		return "", "", err
 	}
 
-	sessions, err := s.userRepo.GetSessions(id)
-	if err != nil {
-		return "", "", err
+	sessions := s.userRepo.GetSessions(id, idField)
+	if !sessions.Valid {
+		return "", "", errors.New("sessions is not valid")
 	}
 
-	split := strings.Split(sessions, "/")
+	split := strings.Split(sessions.String, "/")
 
 	contains := false
 	for _, value := range split {
@@ -160,12 +166,11 @@ func (s *AuthService) TokenValidateRefresh(tokenString string) (id string, id_fi
 		return "", "", errors.New("session is not active")
 	}
 
-	return id, id_field, nil
+	return id, idField, nil
 }
 
-// FindByID implements the method to find a user model by primary key
-func (s *AuthService) Logout(uuid string, refreshToken string) error {
-	err := s.userRepo.RemoveSession(uuid, refreshToken)
+func (s *AuthService) Logout(id string, field string, refreshToken string) error {
+	err := s.userRepo.RemoveSession(id, field, refreshToken)
 	if err != nil {
 		return err
 	}
@@ -173,7 +178,6 @@ func (s *AuthService) Logout(uuid string, refreshToken string) error {
 	return nil
 }
 
-// FindByID implements the method to find a user model by primary key
 func (s *AuthService) GoogleOauth2(code string) (refreshToken string, accessToken string, err error) {
 	tokenUrl := "https://oauth2.googleapis.com/token"
 	userProfileUrl := "https://www.googleapis.com/oauth2/v2/userinfo"
@@ -269,13 +273,15 @@ func (s *AuthService) GoogleOauth2(code string) (refreshToken string, accessToke
 		return "", "", err
 	}
 
-	refreshToken, err = s.tokenBuildRefresh(user.UUID, "google_id")
+	s.logger.Info("USER: ", user)
+
+	refreshToken, err = s.tokenBuildRefresh(user.GoogleId, "google_id")
 	if err != nil {
 		s.logger.Error(err.Error())
 		return "", "", err
 	}
 
-	accessToken, err = s.TokenBuildAccess(user.UUID, "google_id")
+	accessToken, err = s.TokenBuildAccess(user.GoogleId, "google_id")
 	if err != nil {
 		s.logger.Error(err.Error())
 		return "", "", err

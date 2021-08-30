@@ -1,10 +1,22 @@
 package userModel
 
+import "database/sql"
+
 // User represents user resources.
 type User struct {
-	UUID    string `json:"uuid" db:"uuid"`
-	Email   string `json:"email" db:"email"`
-	Credits int    `json:"credits" db:"credits"`
+	UUID      string `json:"uuid" db:"uuid"`
+	GoogleId  string `json:"google_id" db:"google_id"`
+	DiscordId string `json:"discord_id" db:"discord_id"`
+	Email     string `json:"email" db:"email"`
+	Credits   int    `json:"credits" db:"credits"`
+}
+
+type UserScan struct {
+	UUID      sql.NullString `json:"uuid" db:"uuid"`
+	GoogleId  sql.NullString `json:"google_id" db:"google_id"`
+	DiscordId sql.NullString `json:"discord_id" db:"discord_id"`
+	Email     sql.NullString `json:"email" db:"email"`
+	Credits   sql.NullInt16  `json:"credits" db:"credits"`
 }
 
 // UpdateUser represents user resources.
