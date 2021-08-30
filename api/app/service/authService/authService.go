@@ -620,7 +620,7 @@ func (s *AuthService) microsoftMinecraftProfile(client *http.Client, minecraftAc
 	s.logger.Infof(string(j))
 
 	if _, ok := responseJson["error"]; ok {
-		return "", "", errors.New("your xbox account does not own minecraft")
+		return "", "", errors.New("your microsoft account does not own minecraft")
 	}
 
 	uuid = responseJson["id"].(string)
