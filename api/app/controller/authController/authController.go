@@ -15,6 +15,7 @@ import (
 //UserControllerInterface define the user controller interface methods
 type AuthControllerInterface interface {
 	GoogleOauth2(c *gin.Context)
+	TwitchOauth2(c *gin.Context)
 	DiscordOauth2(c *gin.Context)
 	MinecraftOauth2(c *gin.Context)
 	RefreshAccessToken(c *gin.Context)
@@ -50,6 +51,21 @@ func (uc *AuthController) GoogleOauth2(c *gin.Context) {
 	code := c.Query("code")
 
 	refreshToken, accessToken, err := uc.service.GoogleOauth2(code)
+	if err != nil {
+		uc.logger.Error(err.Error())
+		appError.Respond(c, http.StatusBadRequest, err)
+		return
+	}
+
+	response := AuthResponse{RefreshToken: refreshToken, AccessToken: accessToken}
+	c.JSON(http.StatusOK, response)
+}
+
+// Find implements the method to handle the service to find a user by the primary key
+func (uc *AuthController) TwitchOauth2(c *gin.Context) {
+	code := c.Query("code")
+
+	refreshToken, accessToken, err := uc.service.TwitchOauth2(code)
 	if err != nil {
 		uc.logger.Error(err.Error())
 		appError.Respond(c, http.StatusBadRequest, err)

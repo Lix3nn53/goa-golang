@@ -6,6 +6,7 @@ import "database/sql"
 type User struct {
 	UUID      string `json:"uuid" db:"uuid"`
 	GoogleId  string `json:"google_id" db:"google_id"`
+	TwitchId  string `json:"twitch_id" db:"twitch_id"`
 	DiscordId string `json:"discord_id" db:"discord_id"`
 	Email     string `json:"email" db:"email"`
 	Credits   int    `json:"credits" db:"credits"`
@@ -14,6 +15,7 @@ type User struct {
 type UserScan struct {
 	UUID      sql.NullString `json:"uuid" db:"uuid"`
 	GoogleId  sql.NullString `json:"google_id" db:"google_id"`
+	TwitchId  sql.NullString `json:"twitch_id" db:"twitch_id"`
 	DiscordId sql.NullString `json:"discord_id" db:"discord_id"`
 	Email     sql.NullString `json:"email" db:"email"`
 	Credits   sql.NullInt16  `json:"credits" db:"credits"`
@@ -33,6 +35,12 @@ type CreateUserMicrosoft struct {
 // CreateUser represents user resources.
 type CreateUserGoogle struct {
 	GoogleId string `json:"google_id" validate:"required"`
+	Email    string `json:"email" validate:"required"`
+}
+
+// CreateUser represents user resources.
+type CreateUserTwitch struct {
+	TwitchId string `json:"twitch_id" validate:"required"`
 	Email    string `json:"email" validate:"required"`
 }
 

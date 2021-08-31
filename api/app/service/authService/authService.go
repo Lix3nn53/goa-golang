@@ -36,6 +36,7 @@ type AuthServiceInterface interface {
 	TokenValidateRefresh(tokenString string) (id string, idField string, err error)
 	Logout(id string, idField string, refreshToken string) error
 	GoogleOauth2(code string) (refreshToken string, accessToken string, err error)
+	TwitchOauth2(code string) (refreshToken string, accessToken string, err error)
 	DiscordOauth2(code string) (refreshToken string, accessToken string, err error)
 	MinecraftOauth2(code string) (refreshToken string, accessToken string, err error)
 }
@@ -390,6 +391,127 @@ func (s *AuthService) DiscordOauth2(code string) (refreshToken string, accessTok
 	}
 
 	accessToken, err = s.TokenBuildAccess(user.DiscordId, "discord_id")
+	if err != nil {
+		s.logger.Error(err.Error())
+		return "", "", err
+	}
+
+	return refreshToken, accessToken, nil
+}
+
+func (s *AuthService) TwitchOauth2(code string) (refreshToken string, accessToken string, err error) {
+	tokenUrl := "https://id.twitch.tv/oauth2/token"
+	userProfileUrl := "https://api.twitch.tv/helix/users"
+
+	client := &http.Client{Timeout: 10 * time.Second}
+
+	// Access token request
+	// Access token request
+	data := map[string]interface{}{
+		"code":          code,
+		"client_id":     os.Getenv("TWITCH_CLIENT_ID"),
+		"client_secret": os.Getenv("TWITCH_CLIENT_SECRET"),
+		"redirect_uri":  os.Getenv("OAUTH_REDIRECT_URI"),
+		"grant_type":    "authorization_code",
+	}
+
+	json_data, err := json.Marshal(data)
+	if err != nil {
+		return "", "", err
+	}
+
+	s.logger.Infof(string(json_data))
+
+	accessTokenRequest, _ := http.NewRequest(http.MethodPost, tokenUrl, bytes.NewReader(json_data))
+	accessTokenRequest.Close = true
+	accessTokenRequest.Header.Set("Content-Type", "application/json")
+	accessTokenRequest.Header.Set("Accept", "application/json")
+
+	// Access token response
+	accessTokenResponse, err := client.Do((accessTokenRequest))
+	if err != nil {
+		return "", "", err
+	}
+	defer accessTokenResponse.Body.Close()
+
+	var accessTokenResponseJson map[string]interface{}
+	err = json.NewDecoder(accessTokenResponse.Body).Decode(&accessTokenResponseJson)
+	if err != nil {
+		return "", "", err
+	}
+	// print response
+	j, err := json.MarshalIndent(accessTokenResponseJson, "", "\t")
+	if err != nil {
+		return "", "", err
+	}
+	s.logger.Infof(string(j))
+	// check for error field in json
+	if accessTokenResponseJson["error"] != nil {
+		err = errors.New(accessTokenResponseJson["error"].(string))
+		return "", "", err
+	}
+	accessTokenTwitch := accessTokenResponseJson["access_token"].(string)
+
+	// User info request
+	userInfoRequest, _ := http.NewRequest(http.MethodGet, userProfileUrl, nil)
+	userInfoRequest.Header.Set("Authorization", "Bearer "+accessTokenTwitch)
+	userInfoRequest.Header.Set("Client-Id", os.Getenv("TWITCH_CLIENT_ID"))
+
+	// Access token response
+	userInfoResponse, err := client.Do((userInfoRequest))
+	if err != nil {
+		return "", "", err
+	}
+	defer userInfoResponse.Body.Close()
+
+	var userInfoResponseJsonArray map[string]interface{}
+	err = json.NewDecoder(userInfoResponse.Body).Decode(&userInfoResponseJsonArray)
+	if err != nil {
+		return "", "", err
+	}
+
+	j, err = json.MarshalIndent(userInfoResponseJsonArray, "", "\t")
+	if err != nil {
+		return "", "", err
+	}
+	s.logger.Infof(string(j))
+
+	twitchUsers := userInfoResponseJsonArray["data"].([]map[string]inte rface{})
+
+	twitchUser := twitchUsers[0]
+
+	twitchId := twitchUser["id"].(string)
+	email := twitchUser["email"].(string)
+
+	userModel := userModel.CreateUserTwitch{
+		TwitchId: twitchId,
+		Email:    email,
+	}
+
+	// FIND USER IF EXISTS
+	user, err := s.userRepo.FindByID(twitchId, "twitch_id")
+
+	if errors.Is(err, sql.ErrNoRows) {
+		// REGISTER USER IF DOES NOT EXIST
+		user, err = s.userRepo.CreateWithTwitch(userModel)
+		if err != nil {
+			s.logger.Error(err.Error())
+			return "", "", err
+		}
+	} else if err != nil {
+		s.logger.Error(err.Error())
+		return "", "", err
+	}
+
+	s.logger.Info("USER: ", user)
+
+	refreshToken, err = s.tokenBuildRefresh(user.TwitchId, "twitch_id")
+	if err != nil {
+		s.logger.Error(err.Error())
+		return "", "", err
+	}
+
+	accessToken, err = s.TokenBuildAccess(user.TwitchId, "twitch_id")
 	if err != nil {
 		s.logger.Error(err.Error())
 		return "", "", err

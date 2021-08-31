@@ -21,6 +21,7 @@ type UserRepositoryInterface interface {
 	UpdateByID(id string, field string, user userModel.UpdateUser) error
 	CreateWithMicrosoft(create userModel.CreateUserMicrosoft) (user *userModel.User, err error)
 	CreateWithGoogle(create userModel.CreateUserGoogle) (user *userModel.User, err error)
+	CreateWithTwitch(create userModel.CreateUserTwitch) (user *userModel.User, err error)
 	CreateWithDiscord(create userModel.CreateUserDiscord) (user *userModel.User, err error)
 	GetSessions(id string, field string) (sessions sql.NullString)
 	AddSession(id string, field string, refreshToken string) error
@@ -36,12 +37,12 @@ func NewUserRepository(db *storage.DbStore) UserRepositoryInterface {
 
 // FindByID implements the method to find a user from the store
 func (r *UserRepository) FindByID(id string, field string) (user *userModel.User, err error) {
-	var query = "SELECT uuid, google_id, discord_id, email, credits FROM goa_player_web WHERE " + field + " = ?"
+	var query = "SELECT uuid, google_id, twitch_id, discord_id, email, credits FROM goa_player_web WHERE " + field + " = ?"
 	row := r.db.QueryRow(query, id)
 
 	scan := &userModel.UserScan{}
 
-	if err := row.Scan(&scan.UUID, &scan.GoogleId, &scan.DiscordId, &scan.Email, &scan.Credits); err != nil {
+	if err := row.Scan(&scan.UUID, &scan.GoogleId, &scan.TwitchId, &scan.DiscordId, &scan.Email, &scan.Credits); err != nil {
 		return nil, err
 	}
 
@@ -144,6 +145,37 @@ func (r *UserRepository) CreateWithGoogle(UserSignUp userModel.CreateUserGoogle)
 }
 
 // Create implements the method to persist a new user
+func (r *UserRepository) CreateWithTwitch(UserSignUp userModel.CreateUserTwitch) (user *userModel.User, err error) {
+	createUserQuery := `INSERT INTO goa_player_web (twitch_id, email) VALUES (?, ?)`
+
+	stmt, err := r.db.Prepare(createUserQuery)
+	if err != nil {
+		return nil, err
+	}
+	defer stmt.Close()
+
+	result, err := stmt.Exec(UserSignUp.TwitchId, UserSignUp.Email)
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return nil, err
+	}
+	n := int(rows) // truncated on machines with 32-bit ints
+	if n == 0 {
+		return nil, appError.ErrNotFound
+	}
+
+	return &userModel.User{
+		TwitchId: UserSignUp.TwitchId,
+		Email:    UserSignUp.Email,
+		Credits:  0,
+	}, nil
+}
+
+// Create implements the method to persist a new user
 func (r *UserRepository) CreateWithDiscord(UserSignUp userModel.CreateUserDiscord) (user *userModel.User, err error) {
 	createUserQuery := `INSERT INTO goa_player_web (discord_id) VALUES (?)`
 
@@ -168,8 +200,8 @@ func (r *UserRepository) CreateWithDiscord(UserSignUp userModel.CreateUserDiscor
 	}
 
 	return &userModel.User{
-		GoogleId: UserSignUp.DiscordId,
-		Credits:  0,
+		DiscordId: UserSignUp.DiscordId,
+		Credits:   0,
 	}, nil
 }
 
