@@ -49,6 +49,7 @@ func (r *UserRepository) FindByID(id string, field string) (user *userModel.User
 	user = &userModel.User{
 		UUID:      scan.UUID.String,
 		GoogleId:  scan.GoogleId.String,
+		TwitchId:  scan.TwitchId.String,
 		DiscordId: scan.DiscordId.String,
 		Email:     scan.Email.String,
 		Credits:   int(scan.Credits.Int16),

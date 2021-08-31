@@ -399,6 +399,14 @@ func (s *AuthService) DiscordOauth2(code string) (refreshToken string, accessTok
 	return refreshToken, accessToken, nil
 }
 
+type twithResponse struct {
+	Data []struct {
+		DisplayName string `json:"display_name"`
+		Email       string `json:"email"`
+		Id          string `json:"id"`
+	} `json:"data"`
+}
+
 func (s *AuthService) TwitchOauth2(code string) (refreshToken string, accessToken string, err error) {
 	tokenUrl := "https://id.twitch.tv/oauth2/token"
 	userProfileUrl := "https://api.twitch.tv/helix/users"
@@ -464,24 +472,22 @@ func (s *AuthService) TwitchOauth2(code string) (refreshToken string, accessToke
 	}
 	defer userInfoResponse.Body.Close()
 
-	var userInfoResponseJsonArray map[string]interface{}
-	err = json.NewDecoder(userInfoResponse.Body).Decode(&userInfoResponseJsonArray)
+	var twitchRes twithResponse
+	err = json.NewDecoder(userInfoResponse.Body).Decode(&twitchRes)
 	if err != nil {
 		return "", "", err
 	}
 
-	j, err = json.MarshalIndent(userInfoResponseJsonArray, "", "\t")
+	j, err = json.MarshalIndent(twitchRes, "", "\t")
 	if err != nil {
 		return "", "", err
 	}
 	s.logger.Infof(string(j))
 
-	twitchUsers := userInfoResponseJsonArray["data"].([]map[string]inte rface{})
+	twitchUser := twitchRes.Data[0]
 
-	twitchUser := twitchUsers[0]
-
-	twitchId := twitchUser["id"].(string)
-	email := twitchUser["email"].(string)
+	twitchId := twitchUser.Id
+	email := twitchUser.Email
 
 	userModel := userModel.CreateUserTwitch{
 		TwitchId: twitchId,
