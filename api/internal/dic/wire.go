@@ -11,6 +11,7 @@ package dic
 import (
 	"goa-golang/app/controller/authController"
 	"goa-golang/app/controller/characterController"
+	"goa-golang/app/controller/mojangController"
 	"goa-golang/app/controller/playerController"
 	"goa-golang/app/controller/userController"
 	"goa-golang/app/repository/characterRepository"
@@ -18,6 +19,7 @@ import (
 	"goa-golang/app/repository/userRepository"
 	"goa-golang/app/service/authService"
 	"goa-golang/app/service/characterService"
+	"goa-golang/app/service/mojangService"
 	"goa-golang/app/service/playerService"
 	"goa-golang/app/service/userService"
 	"goa-golang/internal/logger"
@@ -94,6 +96,19 @@ func initAuthController(us authService.AuthServiceInterface, logger logger.Logge
 	wire.Build(authController.NewAuthController)
 
 	return &authController.AuthController{}
+}
+
+// Mojang
+func initMojangService(logger logger.Logger) mojangService.MojangServiceInterface {
+	wire.Build(mojangService.NewMojangService)
+
+	return &mojangService.MojangService{}
+}
+
+func initMojangController(us mojangService.MojangServiceInterface, logger logger.Logger) mojangController.MojangControllerInterface {
+	wire.Build(mojangController.NewMojangController)
+
+	return &mojangController.MojangController{}
 }
 
 // func initBillingService(db *storage.DbStore) billingService.BillingServiceInterface {

@@ -56,8 +56,7 @@ func (r *PlayerRepository) RemoveByID(uuid string) error {
 
 // Create implements the method to persist a new user
 func (r *PlayerRepository) CreateUUID(createPlayer playerModel.CreatePlayer) (err error) {
-	createUserQuery := `INSERT INTO goa_player (uuid) 
-		VALUES (?)`
+	createUserQuery := `INSERT INTO goa_player (uuid)	VALUES (?)`
 
 	stmt, err := r.db.Prepare(createUserQuery)
 	if err != nil {

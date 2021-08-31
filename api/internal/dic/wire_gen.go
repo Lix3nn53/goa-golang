@@ -7,6 +7,7 @@ package dic
 import (
 	"goa-golang/app/controller/authController"
 	"goa-golang/app/controller/characterController"
+	"goa-golang/app/controller/mojangController"
 	"goa-golang/app/controller/playerController"
 	"goa-golang/app/controller/userController"
 	"goa-golang/app/repository/characterRepository"
@@ -14,6 +15,7 @@ import (
 	"goa-golang/app/repository/userRepository"
 	"goa-golang/app/service/authService"
 	"goa-golang/app/service/characterService"
+	"goa-golang/app/service/mojangService"
 	"goa-golang/app/service/playerService"
 	"goa-golang/app/service/userService"
 	"goa-golang/internal/logger"
@@ -79,4 +81,15 @@ func InitAuthService(playerRepo playerRepository.PlayerRepositoryInterface, user
 func InitAuthController(us authService.AuthServiceInterface, logger2 logger.Logger) authController.AuthControllerInterface {
 	authControllerInterface := authController.NewAuthController(us, logger2)
 	return authControllerInterface
+}
+
+// Mojang
+func InitMojangService(logger2 logger.Logger) mojangService.MojangServiceInterface {
+	mojangServiceInterface := mojangService.NewMojangService(logger2)
+	return mojangServiceInterface
+}
+
+func InitMojangController(us mojangService.MojangServiceInterface, logger2 logger.Logger) mojangController.MojangControllerInterface {
+	mojangControllerInterface := mojangController.NewMojangController(us, logger2)
+	return mojangControllerInterface
 }

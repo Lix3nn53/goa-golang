@@ -91,6 +91,14 @@ func Setup(db *storage.DbStore, dbCache *storage.DbCache, logger logger.Logger) 
 
 			routev1.SetupPlayerRoute(characters, characterCont, authCont)
 		}
+
+		mojang := v1.Group("/mojang")
+		{
+			mojangService := dic.InitMojangService(logger)
+			mojangCont := dic.InitMojangController(mojangService, logger)
+
+			routev1.SetupMojangRoute(mojang, mojangCont)
+		}
 	}
 
 	return r
