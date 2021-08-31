@@ -36,6 +36,7 @@ type AuthServiceInterface interface {
 	TokenValidateRefresh(tokenString string) (id string, idField string, err error)
 	Logout(id string, idField string, refreshToken string) error
 	GoogleOauth2(code string) (refreshToken string, accessToken string, err error)
+	DiscordOauth2(code string) (refreshToken string, accessToken string, err error)
 	MinecraftOauth2(code string) (refreshToken string, accessToken string, err error)
 }
 
@@ -282,6 +283,113 @@ func (s *AuthService) GoogleOauth2(code string) (refreshToken string, accessToke
 	}
 
 	accessToken, err = s.TokenBuildAccess(user.GoogleId, "google_id")
+	if err != nil {
+		s.logger.Error(err.Error())
+		return "", "", err
+	}
+
+	return refreshToken, accessToken, nil
+}
+
+func (s *AuthService) DiscordOauth2(code string) (refreshToken string, accessToken string, err error) {
+	tokenUrl := "https://discord.com/api/v8/oauth2/token"
+	userProfileUrl := "https://discord.com/api/v8/oauth2/@me"
+
+	client := &http.Client{Timeout: 10 * time.Second}
+
+	// Access token request
+	data := url.Values{}
+	data.Set("grant_type", "authorization_code")
+	data.Set("code", code)
+	data.Set("client_id", os.Getenv("DISCORD_CLIENT_ID"))
+	data.Set("client_secret", os.Getenv("DISCORD_CLIENT_SECRET"))
+	data.Set("redirect_uri", os.Getenv("OAUTH_REDIRECT_URI"))
+
+	accessTokenRequest, _ := http.NewRequest(http.MethodPost, tokenUrl, strings.NewReader(data.Encode()))
+	accessTokenRequest.Close = true
+	accessTokenRequest.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	accessTokenRequest.Header.Set("Accept", "application/json")
+
+	// Access token response
+	accessTokenResponse, err := client.Do((accessTokenRequest))
+	if err != nil {
+		return "", "", err
+	}
+	defer accessTokenResponse.Body.Close()
+
+	var accessTokenResponseJson map[string]interface{}
+	err = json.NewDecoder(accessTokenResponse.Body).Decode(&accessTokenResponseJson)
+	if err != nil {
+		return "", "", err
+	}
+	// print response
+	j, err := json.MarshalIndent(accessTokenResponseJson, "", "\t")
+	if err != nil {
+		return "", "", err
+	}
+	s.logger.Infof(string(j))
+	// check for error field in json
+	if accessTokenResponseJson["error"] != nil {
+		err = errors.New(accessTokenResponseJson["error"].(string))
+		return "", "", err
+	}
+	accessTokenDiscord := accessTokenResponseJson["access_token"].(string)
+
+	// User info request
+	userInfoRequest, _ := http.NewRequest(http.MethodGet, userProfileUrl, nil)
+	userInfoRequest.Header.Set("Authorization", "Bearer "+accessTokenDiscord)
+
+	// Access token response
+	userInfoResponse, err := client.Do((userInfoRequest))
+	if err != nil {
+		return "", "", err
+	}
+	defer userInfoResponse.Body.Close()
+
+	var userInfoResponseJson map[string]interface{}
+	err = json.NewDecoder(userInfoResponse.Body).Decode(&userInfoResponseJson)
+	if err != nil {
+		return "", "", err
+	}
+
+	j, err = json.MarshalIndent(userInfoResponseJson, "", "\t")
+	if err != nil {
+		return "", "", err
+	}
+	s.logger.Infof(string(j))
+
+	discordUser := userInfoResponseJson["user"].(map[string]interface{})
+
+	discordId := discordUser["id"].(string)
+
+	userModel := userModel.CreateUserDiscord{
+		DiscordId: discordId,
+	}
+
+	// FIND USER IF EXISTS
+	user, err := s.userRepo.FindByID(discordId, "discord_id")
+
+	if errors.Is(err, sql.ErrNoRows) {
+		// REGISTER USER IF DOES NOT EXIST
+		user, err = s.userRepo.CreateWithDiscord(userModel)
+		if err != nil {
+			s.logger.Error(err.Error())
+			return "", "", err
+		}
+	} else if err != nil {
+		s.logger.Error(err.Error())
+		return "", "", err
+	}
+
+	s.logger.Info("USER: ", user)
+
+	refreshToken, err = s.tokenBuildRefresh(user.DiscordId, "discord_id")
+	if err != nil {
+		s.logger.Error(err.Error())
+		return "", "", err
+	}
+
+	accessToken, err = s.TokenBuildAccess(user.DiscordId, "discord_id")
 	if err != nil {
 		s.logger.Error(err.Error())
 		return "", "", err

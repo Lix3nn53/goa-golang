@@ -21,6 +21,7 @@ type UserRepositoryInterface interface {
 	UpdateByID(id string, field string, user userModel.UpdateUser) error
 	CreateWithMicrosoft(create userModel.CreateUserMicrosoft) (user *userModel.User, err error)
 	CreateWithGoogle(create userModel.CreateUserGoogle) (user *userModel.User, err error)
+	CreateWithDiscord(create userModel.CreateUserDiscord) (user *userModel.User, err error)
 	GetSessions(id string, field string) (sessions sql.NullString)
 	AddSession(id string, field string, refreshToken string) error
 	RemoveSession(id string, field string, refreshToken string) error
@@ -138,6 +139,36 @@ func (r *UserRepository) CreateWithGoogle(UserSignUp userModel.CreateUserGoogle)
 	return &userModel.User{
 		GoogleId: UserSignUp.GoogleId,
 		Email:    UserSignUp.Email,
+		Credits:  0,
+	}, nil
+}
+
+// Create implements the method to persist a new user
+func (r *UserRepository) CreateWithDiscord(UserSignUp userModel.CreateUserDiscord) (user *userModel.User, err error) {
+	createUserQuery := `INSERT INTO goa_player_web (discord_id) VALUES (?)`
+
+	stmt, err := r.db.Prepare(createUserQuery)
+	if err != nil {
+		return nil, err
+	}
+	defer stmt.Close()
+
+	result, err := stmt.Exec(UserSignUp.DiscordId)
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return nil, err
+	}
+	n := int(rows) // truncated on machines with 32-bit ints
+	if n == 0 {
+		return nil, appError.ErrNotFound
+	}
+
+	return &userModel.User{
+		GoogleId: UserSignUp.DiscordId,
 		Credits:  0,
 	}, nil
 }

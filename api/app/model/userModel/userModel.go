@@ -36,6 +36,11 @@ type CreateUserGoogle struct {
 	Email    string `json:"email" validate:"required"`
 }
 
+// CreateUser represents user resources.
+type CreateUserDiscord struct {
+	DiscordId string `json:"discord_id" validate:"required"`
+}
+
 // UpdateUser represents user resources.
 type Sessions struct {
 	Sessions string `json:"sessions" validate:"required"`
