@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS `goa_player_character` (
      `location`             text NOT NULL ,
      `armor_content`        text NOT NULL ,
      `rpg_class`            varchar(45) NOT NULL ,
-     `unlocked_classes`     mediumtext NULL ,
+     `class_skills`         mediumtext NULL ,
      `totalexp`             int NOT NULL ,
      `attr_one`             smallint NOT NULL ,
      `attr_two`             smallint NOT NULL ,

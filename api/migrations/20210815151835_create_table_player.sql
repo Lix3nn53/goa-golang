@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS `goa_player` (
      `storage_personal`  mediumtext NULL ,
      `storage_bazaar`    mediumtext NULL ,
      `storage_premium`   mediumtext NULL ,
+     `lang`              varchar(20) NULL ,
      
      PRIMARY KEY (`uuid`)
 );
