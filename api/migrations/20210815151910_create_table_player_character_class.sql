@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS `goa_player_character_class` (
      `skill_points` mediumtext NOT NULL,
      `totalexp` int NOT NULL,
      `attribute_points` mediumtext NOT NULL,
+     `skill_bar` mediumtext NOT NULL,
      UNIQUE KEY `Index_228` (`class_name`, `uuid`, `character_no`),
      KEY `FK_215` (`uuid`),
      CONSTRAINT `FK_213` FOREIGN KEY `FK_215` (`uuid`) REFERENCES `goa_player` (`uuid`)
